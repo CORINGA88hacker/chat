@@ -24,9 +24,21 @@
 
 <div id="login">
   <h2>Login Edu MT</h2>
+
   <input type="email" id="email" placeholder="Seu e-mail @edu.mt.gov.br" />
   <input type="password" id="senha" placeholder="Senha" />
+
   <button id="btnLogin">Entrar</button>
+  <button id="btnMostrarRegistro">Criar Conta</button>
+
+  <div id="registro" style="display:none; margin-top:10px;">
+    <input type="email" id="emailRegistro" placeholder="Seu e-mail @edu.mt.gov.br" />
+    <input type="password" id="senhaRegistro" placeholder="Senha" />
+    <button id="btnRegistrar">Registrar</button>
+    <button id="btnCancelarRegistro">Cancelar</button>
+    <p id="msgRegistro" style="color:red;"></p>
+  </div>
+
   <p id="msgLogin" style="color: red;"></p>
 </div>
 
@@ -70,16 +82,63 @@
   const db = firebase.database();
   const storage = firebase.storage();
 
+  // Elementos
   const loginDiv = document.getElementById("login");
   const perfilDiv = document.getElementById("perfil");
   const chatDiv = document.getElementById("chat");
   const adminDiv = document.getElementById("admin");
   const msgLogin = document.getElementById("msgLogin");
 
+  const btnMostrarRegistro = document.getElementById("btnMostrarRegistro");
+  const registroDiv = document.getElementById("registro");
+  const btnRegistrar = document.getElementById("btnRegistrar");
+  const btnCancelarRegistro = document.getElementById("btnCancelarRegistro");
+  const msgRegistro = document.getElementById("msgRegistro");
+
   let fotoSelecionada = null;
   let usuarioAtual = null;
 
-  // Botão login
+  // Mostrar formulário registro
+  btnMostrarRegistro.onclick = () => {
+    registroDiv.style.display = "block";
+    msgLogin.textContent = "";
+  };
+
+  // Cancelar registro
+  btnCancelarRegistro.onclick = () => {
+    registroDiv.style.display = "none";
+    msgRegistro.textContent = "";
+  };
+
+  // Registrar usuário
+  btnRegistrar.onclick = () => {
+    const email = document.getElementById("emailRegistro").value.trim();
+    const senha = document.getElementById("senhaRegistro").value;
+
+    msgRegistro.textContent = "";
+
+    if (!email.endsWith("@edu.mt.gov.br")) {
+      msgRegistro.textContent = "Só e-mails @edu.mt.gov.br são permitidos.";
+      return;
+    }
+
+    if (senha.length < 6) {
+      msgRegistro.textContent = "Senha deve ter pelo menos 6 caracteres.";
+      return;
+    }
+
+    auth.createUserWithEmailAndPassword(email, senha)
+      .then(() => {
+        registroDiv.style.display = "none";
+        msgRegistro.textContent = "";
+        alert("Conta criada com sucesso! Faça login.");
+      })
+      .catch(err => {
+        msgRegistro.textContent = err.message;
+      });
+  };
+
+  // Login
   document.getElementById("btnLogin").onclick = () => {
     const email = document.getElementById("email").value.trim();
     const senha = document.getElementById("senha").value;
@@ -94,7 +153,7 @@
       .catch(err => msgLogin.textContent = err.message);
   };
 
-  // Verifica login e banimento
+  // Verifica login, perfil e banimento
   auth.onAuthStateChanged(async user => {
     if (user) {
       if (!user.email.endsWith("@edu.mt.gov.br")) {
