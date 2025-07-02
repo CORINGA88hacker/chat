@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat Grupos + Privado Firebase</title>
+<title>Chat Grupos + Privado Firebase com Registro e Pesquisa</title>
 
 <style>
   html, body {
@@ -44,6 +44,15 @@
   }
   .abaMenu button.ativo {
     background: #1abc9c;
+  }
+  #inputPesquisa {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
   }
   #listaGrupos, #listaUsuarios {
     flex-grow: 1;
@@ -153,6 +162,51 @@
   #btnEnviar:hover {
     background: #16a085;
   }
+
+  /* Tela cadastro */
+  #telaCadastro {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #telaCadastro .box {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 300px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  #telaCadastro input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  #telaCadastro button {
+    background: #1abc9c;
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    font-size: 16px;
+  }
+  #telaCadastro button:hover {
+    background: #16a085;
+  }
+  #telaCadastro h2 {
+    margin-bottom: 15px;
+  }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -161,12 +215,23 @@
 </head>
 <body>
 
-<div id="app">
+<!-- Tela cadastro -->
+<div id="telaCadastro">
+  <div class="box">
+    <h2>Crie sua conta</h2>
+    <input type="text" id="nomeCadastro" placeholder="Seu nome" />
+    <input type="url" id="fotoCadastro" placeholder="URL da sua foto de perfil" />
+    <button id="btnCriarConta">Criar Conta</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
   <div id="menuLateral">
     <div class="abaMenu">
       <button id="btnAbaGrupos" class="ativo">Grupos</button>
       <button id="btnAbaUsuarios">Usuários</button>
     </div>
+    <input type="text" id="inputPesquisa" placeholder="Pesquisar..." />
     <div id="listaGrupos"></div>
     <div id="listaUsuarios" style="display:none"></div>
   </div>
@@ -195,18 +260,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const usuarioAtual = {
-  uid: 'user1',
-  nome: 'Maninho',
-  fotoPerfil: 'https://i.pravatar.cc/150?img=5'
-};
+let usuarioAtual = null; // Vai receber dados do usuário logado
 
-let usuariosDados = {};
-// Carregar usuarios logo no inicio pra garantir dados na hora de mostrar mensagem
-db.ref('usuarios').once('value').then(snapshot => {
-  usuariosDados = snapshot.val() || {};
-});
+// Elementos DOM
+const telaCadastro = document.getElementById('telaCadastro');
+const btnCriarConta = document.getElementById('btnCriarConta');
+const nomeCadastro = document.getElementById('nomeCadastro');
+const fotoCadastro = document.getElementById('fotoCadastro');
 
+const app = document.getElementById('app');
 const btnAbaGrupos = document.getElementById('btnAbaGrupos');
 const btnAbaUsuarios = document.getElementById('btnAbaUsuarios');
 const listaGrupos = document.getElementById('listaGrupos');
@@ -215,32 +277,110 @@ const headerChat = document.getElementById('headerChat');
 const mensagensDiv = document.getElementById('mensagens');
 const inputMsg = document.getElementById('inputMsg');
 const btnEnviar = document.getElementById('btnEnviar');
+const inputPesquisa = document.getElementById('inputPesquisa');
 
 let abaAtual = 'grupos';
 let grupoSelecionado = null;
 let usuarioSelecionado = null;
 let mensagensListener = null;
 let gruposDados = {};
+let usuariosDados = {};
 
-btnAbaGrupos.onclick = () => {
-  abaAtual = 'grupos';
-  btnAbaGrupos.classList.add('ativo');
-  btnAbaUsuarios.classList.remove('ativo');
-  listaGrupos.style.display = 'block';
-  listaUsuarios.style.display = 'none';
-  limparChat();
-  carregarGrupos();
+// Função para salvar usuário novo
+btnCriarConta.onclick = () => {
+  const nome = nomeCadastro.value.trim();
+  const foto = fotoCadastro.value.trim();
+
+  if (!nome) {
+    alert('Por favor, digite seu nome');
+    return;
+  }
+  if (!foto) {
+    alert('Por favor, coloque a URL da sua foto de perfil');
+    return;
+  }
+
+  // Gerar UID simples e único (pode melhorar depois)
+  const novoUid = 'user_' + Date.now();
+
+  const novoUsuario = {
+    nome,
+    fotoPerfil: foto,
+  };
+
+  db.ref('usuarios/' + novoUid).set(novoUsuario).then(() => {
+    usuarioAtual = { uid: novoUid, ...novoUsuario };
+    telaCadastro.style.display = 'none';
+    app.style.display = 'flex';
+    inicializarApp();
+  }).catch(err => {
+    alert('Erro ao criar conta: ' + err.message);
+  });
 };
 
-btnAbaUsuarios.onclick = () => {
-  abaAtual = 'usuarios';
-  btnAbaUsuarios.classList.add('ativo');
-  btnAbaGrupos.classList.remove('ativo');
-  listaUsuarios.style.display = 'block';
-  listaGrupos.style.display = 'none';
-  limparChat();
+// Inicializa app após login
+function inicializarApp() {
   carregarUsuarios();
-};
+  carregarGrupos();
+
+  btnAbaGrupos.onclick = () => {
+    abaAtual = 'grupos';
+    btnAbaGrupos.classList.add('ativo');
+    btnAbaUsuarios.classList.remove('ativo');
+    listaGrupos.style.display = 'block';
+    listaUsuarios.style.display = 'none';
+    limparChat();
+    carregarGrupos();
+    inputPesquisa.value = '';
+  };
+  btnAbaUsuarios.onclick = () => {
+    abaAtual = 'usuarios';
+    btnAbaUsuarios.classList.add('ativo');
+    btnAbaGrupos.classList.remove('ativo');
+    listaUsuarios.style.display = 'block';
+    listaGrupos.style.display = 'none';
+    limparChat();
+    carregarUsuarios();
+    inputPesquisa.value = '';
+  };
+
+  inputPesquisa.oninput = () => {
+    if (abaAtual === 'grupos') {
+      filtrarLista(listaGrupos, inputPesquisa.value);
+    } else {
+      filtrarLista(listaUsuarios, inputPesquisa.value);
+    }
+  };
+
+  btnEnviar.onclick = () => {
+    const texto = inputMsg.value.trim();
+    if (!texto) return;
+
+    let ref;
+    if (grupoSelecionado) {
+      ref = db.ref('mensagens/' + grupoSelecionado);
+    } else if (usuarioSelecionado) {
+      const chatId = gerarIdChatPrivado(usuarioAtual.uid, usuarioSelecionado);
+      ref = db.ref('chatPrivado/' + chatId);
+    } else {
+      return;
+    }
+
+    const msg = {
+      uid: usuarioAtual.uid,
+      texto,
+      timestamp: Date.now()
+    };
+
+    ref.push(msg).then(() => {
+      inputMsg.value = '';
+      inputMsg.focus();
+    });
+  };
+
+  // Já inicia na aba grupos
+  btnAbaGrupos.click();
+}
 
 function limparChat() {
   grupoSelecionado = null;
@@ -262,16 +402,15 @@ function carregarGrupos() {
       const grupo = gruposDados[grupoId];
       const div = document.createElement('div');
       div.className = 'itemLista';
+      div.dataset.id = grupoId;
       div.innerHTML = `
         <img src="${grupo.foto || 'https://via.placeholder.com/40'}" alt="foto grupo"/>
         <span>${grupo.nome || grupoId}</span>
       `;
       div.onclick = () => selecionarGrupo(grupoId);
-      if (grupoSelecionado === grupoId) {
-        div.classList.add('selecionado');
-      }
       listaGrupos.appendChild(div);
     }
+    filtrarLista(listaGrupos, inputPesquisa.value);
   });
 }
 
@@ -286,6 +425,7 @@ function carregarUsuarios() {
       const user = usuariosDados[uid];
       const div = document.createElement('div');
       div.className = 'itemLista';
+      div.dataset.id = uid;
       div.innerHTML = `
         <img src="${user.fotoPerfil || 'https://via.placeholder.com/40'}" alt="foto usuario" />
         <span>${user.nome || uid}</span>
@@ -293,6 +433,7 @@ function carregarUsuarios() {
       div.onclick = () => selecionarUsuario(uid);
       listaUsuarios.appendChild(div);
     }
+    filtrarLista(listaUsuarios, inputPesquisa.value);
   });
 }
 
@@ -329,7 +470,7 @@ function selecionarUsuario(uid) {
 
 function marcarSelecionado(lista, id) {
   Array.from(lista.children).forEach(div => {
-    div.classList.toggle('selecionado', div.dataset.id === id || div.textContent.includes(id));
+    div.classList.toggle('selecionado', div.dataset.id === id);
   });
 }
 
@@ -346,20 +487,16 @@ function carregarMensagensGrupo(grupoId) {
   const ref = db.ref('mensagens/' + grupoId);
   mensagensListener = ref;
 
-  db.ref('usuarios').once('value').then(snapshot => {
-    usuariosDados = snapshot.val() || {};
+  ref.on('value', snapshot => {
+    const msgs = snapshot.val() || {};
+    mensagensDiv.innerHTML = '';
 
-    ref.on('value', snapshot => {
-      const msgs = snapshot.val() || {};
-      mensagensDiv.innerHTML = '';
-
-      for (const key in msgs) {
-        const msg = msgs[key];
-        const user = usuariosDados[msg.uid] || {};
-        adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
-      }
-      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
-    });
+    for (const key in msgs) {
+      const msg = msgs[key];
+      const user = usuariosDados[msg.uid] || {};
+      adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
+    }
+    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
   });
 }
 
@@ -373,20 +510,16 @@ function carregarMensagensPrivadas(uidOutro) {
   const ref = db.ref('chatPrivado/' + chatId);
   mensagensListener = ref;
 
-  db.ref('usuarios').once('value').then(snapshot => {
-    usuariosDados = snapshot.val() || {};
+  ref.on('value', snapshot => {
+    const msgs = snapshot.val() || {};
+    mensagensDiv.innerHTML = '';
 
-    ref.on('value', snapshot => {
-      const msgs = snapshot.val() || {};
-      mensagensDiv.innerHTML = '';
-
-      for (const key in msgs) {
-        const msg = msgs[key];
-        const user = usuariosDados[msg.uid] || {};
-        adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
-      }
-      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
-    });
+    for (const key in msgs) {
+      const msg = msgs[key];
+      const user = usuariosDados[msg.uid] || {};
+      adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
+    }
+    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
   });
 }
 
@@ -407,35 +540,16 @@ function adicionarMensagemNaTela(nome, foto, texto, uidMensagem) {
   mensagensDiv.appendChild(div);
 }
 
-btnEnviar.onclick = () => {
-  const texto = inputMsg.value.trim();
-  if (!texto) return;
-
-  let ref;
-  if (grupoSelecionado) {
-    ref = db.ref('mensagens/' + grupoSelecionado);
-  } else if (usuarioSelecionado) {
-    const chatId = gerarIdChatPrivado(usuarioAtual.uid, usuarioSelecionado);
-    ref = db.ref('chatPrivado/' + chatId);
-  } else {
-    return;
-  }
-
-  const msg = {
-    uid: usuarioAtual.uid,
-    texto,
-    timestamp: Date.now()
-  };
-
-  ref.push(msg).then(() => {
-    inputMsg.value = '';
-    inputMsg.focus();
+// Função para filtrar itens da lista (grupos ou usuários)
+function filtrarLista(lista, textoFiltro) {
+  textoFiltro = textoFiltro.toLowerCase();
+  Array.from(lista.children).forEach(div => {
+    const nome = div.textContent.toLowerCase();
+    div.style.display = nome.includes(textoFiltro) ? '' : 'none';
   });
-};
+}
 
-// Inicializa mostrando grupos
-btnAbaGrupos.click();
-</script>
-
-</body>
-</html>
+// Inicialização
+// Checa se usuário já está salvo no localStorage
+const userSalvo = localStorage.getItem('usuarioAtual');
+if
