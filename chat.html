@@ -3,162 +3,147 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat com Login e Registro Firebase</title>
+<title>Chat com Login e Mensagens Alinhadas</title>
 
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #e8f0fe;
     margin: 0; padding: 0;
+    background: #f4f7f9;
+    height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-  }
-  .container {
-    max-width: 600px;
-    width: 100%;
-    margin: 20px;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
-  }
-
-  h2 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  label {
-    display: block;
-    margin: 10px 0 5px 0;
-    font-weight: bold;
-  }
-
-  input[type="text"], input[type="email"], input[type="password"], input[type="file"] {
-    width: 100%;
-    padding: 8px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-
-  button {
-    margin-top: 15px;
-    padding: 10px;
-    width: 100%;
-    font-weight: bold;
-    background-color: #1a73e8;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #155ab6;
-  }
-
-  #toggleLoginRegister {
-    margin-top: 15px;
-    background: none;
-    color: #1a73e8;
-    border: none;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 0.9rem;
-  }
-
-  #chatSection {
-    display: none;
-    flex-direction: column;
-    height: 80vh;
-  }
-
-  #chatMessages {
-    flex: 1;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 6px;
-    background: #f7f9fc;
-    margin-bottom: 10px;
-  }
-
-  .msg {
-    margin-bottom: 12px;
-    display: flex;
     align-items: center;
   }
+  #loginSection, #chatSection {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
+    padding: 20px;
+    width: 360px;
+  }
+  #loginSection {
+    text-align: center;
+  }
+  #chatSection {
+    display: none;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+  input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin: 6px 0 12px 0;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    width: 100%;
+  }
+  button:hover {
+    background: #16a085;
+  }
+  #userInfo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  #userFoto {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+  }
+  #chatMessages {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 10px;
+    overflow-y: auto;
+    background: #fefefe;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .msg {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  /* Mensagens dos outros à esquerda */
+  .msg.other {
+    justify-content: flex-start;
+  }
+  /* Suas mensagens à direita */
   .msg.me {
     justify-content: flex-end;
-  }
-  .msg .msgContent {
-    max-width: 70%;
-    padding: 10px 15px;
-    border-radius: 20px;
-    background: #1a73e8;
-    color: white;
-    word-wrap: break-word;
-  }
-  .msg.me .msgContent {
-    background: #0b52d0;
   }
   .msg .userPhoto {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    margin-right: 8px;
     object-fit: cover;
   }
+  /* Foto à esquerda para outros */
+  .msg.other .userPhoto {
+    margin-right: 8px;
+  }
+  /* Foto à direita para você */
   .msg.me .userPhoto {
     margin-left: 8px;
-    margin-right: 0;
   }
-
+  .msg .msgContent {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    word-wrap: break-word;
+  }
+  /* Cor das mensagens dos outros */
+  .msg.other .msgContent {
+    background: #e0e0e0;
+    color: #333;
+  }
+  /* Cor das suas mensagens */
+  .msg.me .msgContent {
+    background: #1abc9c;
+    color: white;
+  }
   #inputMsg {
-    width: calc(100% - 90px);
     padding: 10px;
-    font-size: 1rem;
     border-radius: 6px;
     border: 1px solid #ccc;
+    width: calc(100% - 100px);
+    font-size: 1rem;
   }
-
   #btnSendMsg {
     width: 80px;
-    font-weight: bold;
-    background-color: #1a73e8;
-    color: white;
+    background: #1abc9c;
     border: none;
+    color: white;
+    font-weight: bold;
     border-radius: 6px;
     cursor: pointer;
+    margin-left: 10px;
   }
-
   #btnSendMsg:hover {
-    background-color: #155ab6;
+    background: #16a085;
   }
-
-  #userInfo {
-    text-align: center;
-    margin-bottom: 10px;
-  }
-  #userInfo img {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    vertical-align: middle;
-    margin-right: 10px;
-    object-fit: cover;
-  }
-
   #btnLogout {
+    background: #e74c3c;
     margin-top: 10px;
     width: 100%;
-    background-color: #e53935;
   }
-  #btnLogout:hover {
-    background-color: #b92b27;
+  #uploadFoto {
+    margin-top: 10px;
   }
 </style>
 
@@ -171,50 +156,30 @@
 </head>
 <body>
 
-<div class="container" id="loginRegisterSection">
-  <h2 id="formTitle">Login</h2>
+<section id="loginSection">
+  <h1>Login / Registro</h1>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Senha" />
+  <input type="text" id="displayName" placeholder="Nome para exibição (apenas no registro)" />
+  <input type="file" id="uploadFoto" accept="image/*" />
+  <button id="btnRegister">Registrar</button>
+  <button id="btnLogin">Entrar</button>
+</section>
 
-  <form id="formLoginRegister">
-    <div id="inputNameDiv" style="display:none;">
-      <label for="inputNome">Nome completo</label>
-      <input type="text" id="inputNome" placeholder="Seu nome completo" />
-    </div>
-
-    <label for="inputEmail">Email</label>
-    <input type="email" id="inputEmail" placeholder="seu@email.com" required />
-
-    <label for="inputSenha">Senha</label>
-    <input type="password" id="inputSenha" placeholder="Sua senha" required />
-
-    <div id="inputFotoDiv" style="display:none; margin-top:10px;">
-      <label for="inputFoto">Foto de perfil (opcional)</label>
-      <input type="file" id="inputFoto" accept="image/*" />
-    </div>
-
-    <button type="submit" id="btnSubmit">Entrar</button>
-  </form>
-
-  <button id="toggleLoginRegister">Criar uma conta</button>
-</div>
-
-<div class="container" id="chatSection" style="display:none; flex-direction: column;">
+<section id="chatSection">
   <div id="userInfo">
-    <img id="userPhoto" src="https://via.placeholder.com/70" alt="Foto usuário" />
-    <span id="userNameDisplay"></span>
+    <img id="userFoto" alt="Foto do usuário" />
+    <span id="userNome"></span>
   </div>
-
   <div id="chatMessages"></div>
-
-  <div style="display: flex; align-items: center;">
-    <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." autocomplete="off" />
+  <div style="display:flex;">
+    <input id="inputMsg" type="text" placeholder="Digite sua mensagem..." autocomplete="off" />
     <button id="btnSendMsg">Enviar</button>
   </div>
-
   <button id="btnLogout">Sair</button>
-</div>
+</section>
 
 <script>
-  // Config Firebase - substitua pelas suas configs do seu projeto
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -224,230 +189,210 @@
     messagingSenderId: "790408726854",
     appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
   };
-  firebase.initializeApp(firebaseConfig);
 
+  firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
   const storage = firebase.storage();
 
-  // Elementos
-  const loginRegisterSection = document.getElementById('loginRegisterSection');
+  const loginSection = document.getElementById('loginSection');
   const chatSection = document.getElementById('chatSection');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const displayNameInput = document.getElementById('displayName');
+  const uploadFotoInput = document.getElementById('uploadFoto');
 
-  const form = document.getElementById('formLoginRegister');
-  const formTitle = document.getElementById('formTitle');
-  const toggleLoginRegister = document.getElementById('toggleLoginRegister');
-
-  const inputNome = document.getElementById('inputNome');
-  const inputEmail = document.getElementById('inputEmail');
-  const inputSenha = document.getElementById('inputSenha');
-  const inputFoto = document.getElementById('inputFoto');
-
-  const inputNameDiv = document.getElementById('inputNameDiv');
-  const inputFotoDiv = document.getElementById('inputFotoDiv');
-
-  const userPhoto = document.getElementById('userPhoto');
-  const userNameDisplay = document.getElementById('userNameDisplay');
-
+  const userFoto = document.getElementById('userFoto');
+  const userNome = document.getElementById('userNome');
   const chatMessages = document.getElementById('chatMessages');
   const inputMsg = document.getElementById('inputMsg');
   const btnSendMsg = document.getElementById('btnSendMsg');
-
   const btnLogout = document.getElementById('btnLogout');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnRegister = document.getElementById('btnRegister');
 
-  // Estado: login ou registro
-  let isLogin = true;
+  // Registrar novo usuário
+  btnRegister.onclick = async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    const displayName = displayNameInput.value.trim();
 
-  toggleLoginRegister.onclick = () => {
-    isLogin = !isLogin;
-    if(isLogin){
-      formTitle.textContent = "Login";
-      btnSubmit.textContent = "Entrar";
-      toggleLoginRegister.textContent = "Criar uma conta";
-      inputNameDiv.style.display = "none";
-      inputFotoDiv.style.display = "none";
-    } else {
-      formTitle.textContent = "Registrar";
-      btnSubmit.textContent = "Registrar";
-      toggleLoginRegister.textContent = "Já tenho conta";
-      inputNameDiv.style.display = "block";
-      inputFotoDiv.style.display = "block";
+    if (!email || !password || !displayName) {
+      alert('Preencha email, senha e nome para registro.');
+      return;
     }
-  };
 
-  // Função para upload de foto e pegar URL
-  async function uploadFoto(file, uid) {
-    if(!file) return null;
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
 
-    const storageRef = storage.ref(`fotosUsuarios/${uid}_${Date.now()}.jpg`);
-    const snapshot = await storageRef.put(file);
-    return await snapshot.ref.getDownloadURL();
-  }
+      // Fazer upload da foto se existir
+      let fotoURL = '';
+      if (uploadFotoInput.files[0]) {
+        const file = uploadFotoInput.files[0];
+        const storageRef = storage.ref(`usuariosFotos/${user.uid}_${Date.now()}.jpg`);
+        await storageRef.put(file);
+        fotoURL = await storageRef.getDownloadURL();
+      }
 
-  // Atualizar perfil do usuário (nome e foto)
-  async function atualizarPerfil(nome, urlFoto) {
-    if(auth.currentUser){
-      await auth.currentUser.updateProfile({
-        displayName: nome,
-        photoURL: urlFoto || null
+      // Atualizar perfil do usuário
+      await user.updateProfile({
+        displayName: displayName,
+        photoURL: fotoURL || ''
       });
-      // Atualizar no Realtime Database também
-      await db.ref('usuarios/' + auth.currentUser.uid).set({
-        nome: nome,
-        fotoPerfil: urlFoto || '',
-        email: auth.currentUser.email,
+
+      // Salvar no banco
+      await db.ref('usuarios/' + user.uid).set({
+        nome: displayName,
+        fotoPerfil: fotoURL || '',
+        email: user.email,
         banido: false
       });
-    }
-  }
 
-  // Submissão do form login/registro
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-
-    const email = inputEmail.value.trim();
-    const senha = inputSenha.value.trim();
-
-    if(!email || !senha){
-      alert('Email e senha são obrigatórios.');
-      return;
-    }
-
-    if(isLogin){
-      // Login
-      try {
-        await auth.signInWithEmailAndPassword(email, senha);
-      } catch(error){
-        alert('Erro no login: ' + error.message);
-      }
-    } else {
-      // Registro
-      const nome = inputNome.value.trim();
-      if(!nome){
-        alert('Informe seu nome para registrar.');
-        return;
-      }
-
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-        const uid = userCredential.user.uid;
-
-        let urlFoto = null;
-        if(inputFoto.files.length > 0){
-          urlFoto = await uploadFoto(inputFoto.files[0], uid);
-        }
-
-        await atualizarPerfil(nome, urlFoto);
-        alert('Registro realizado com sucesso! Você já está logado.');
-
-      } catch(error){
-        alert('Erro no registro: ' + error.message);
-      }
+      alert('Registro realizado com sucesso!');
+      limparCamposLogin();
+    } catch (error) {
+      alert('Erro no registro: ' + error.message);
     }
   };
 
-  // Monitorar estado de login para mostrar/ocultar telas
-  auth.onAuthStateChanged(user => {
-    if(user){
-      if(user.emailVerified === false){
-        // Opcional: forçar verificar email para segurança
-        // user.sendEmailVerification();
-        // alert('Por favor, verifique seu email antes de entrar.');
-        // auth.signOut();
-        // return;
-      }
+  // Login usuário
+  btnLogin.onclick = async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-      loginRegisterSection.style.display = 'none';
-      chatSection.style.display = 'flex';
-
-      userPhoto.src = user.photoURL || 'https://via.placeholder.com/70';
-      userNameDisplay.textContent = user.displayName || user.email;
-
-      carregarMensagens();
-    } else {
-      loginRegisterSection.style.display = 'block';
-      chatSection.style.display = 'none';
-      chatMessages.innerHTML = '';
-    }
-  });
-
-  // Enviar mensagem
-  btnSendMsg.onclick = enviarMensagem;
-  inputMsg.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){
-      enviarMensagem();
-    }
-  });
-
-  function enviarMensagem(){
-    const texto = inputMsg.value.trim();
-    if(!texto) return;
-
-    const user = auth.currentUser;
-    if(!user) {
-      alert('Você precisa estar logado para enviar mensagens.');
+    if (!email || !password) {
+      alert('Preencha email e senha.');
       return;
     }
 
-    // Verifica banimento no Realtime Database (pode adaptar essa lógica)
-    db.ref('usuarios/' + user.uid).once('value').then(snap => {
-      if(snap.exists()){
-        const data = snap.val();
-        if(data.banido){
-          alert('Você está banido e não pode enviar mensagens.');
-          return;
-        }
-
-        // Gravar mensagem
-        const msgRef = db.ref('mensagens').push();
-        msgRef.set({
-          uid: user.uid,
-          nome: user.displayName || '',
-          fotoPerfil: user.photoURL || '',
-          texto: texto,
-          timestamp: Date.now()
-        });
-        inputMsg.value = '';
-      } else {
-        alert('Usuário não encontrado no banco de dados.');
-      }
-    });
-  }
-
-  // Mostrar mensagens
-  function carregarMensagens(){
-    db.ref('mensagens').limitToLast(50).on('value', snapshot => {
-      const msgs = snapshot.val() || {};
-      chatMessages.innerHTML = '';
-
-      for(const key in msgs){
-        const m = msgs[key];
-        const div = document.createElement('div');
-        div.classList.add('msg');
-        if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
-
-        const foto = m.fotoPerfil || 'https://via.placeholder.com/40';
-        div.innerHTML = `
-          ${div.classList.contains('me') ? `<div class="msgContent">${escapeHtml(m.texto)}</div><img src="${foto}" class="userPhoto" />` : `<img src="${foto}" class="userPhoto" /><div class="msgContent">${escapeHtml(m.texto)}</div>`}
-        `;
-        chatMessages.appendChild(div);
-      }
-
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-  }
-
-  // Escape HTML simples para evitar XSS
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.innerText = text;
-    return div.innerHTML;
-  }
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      limparCamposLogin();
+    } catch (error) {
+      alert('Erro no login: ' + error.message);
+    }
+  };
 
   // Logout
   btnLogout.onclick = () => {
     auth.signOut();
   };
+
+  // Limpa campos login/registro
+  function limparCamposLogin(){
+    emailInput.value = '';
+    passwordInput.value = '';
+    displayNameInput.value = '';
+    uploadFotoInput.value = '';
+  }
+
+  // Ao mudar estado de autenticação
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // Se banido, desloga
+      db.ref('usuarios/' + user.uid).once('value').then(snap => {
+        const userData = snap.val();
+        if (userData && userData.banido) {
+          alert('Você está banido e não pode acessar o chat.');
+          auth.signOut();
+          return;
+        }
+        mostrarChat(user);
+      });
+    } else {
+      mostrarLogin();
+    }
+  });
+
+  // Mostrar chat
+  function mostrarChat(user) {
+    loginSection.style.display = 'none';
+    chatSection.style.display = 'flex';
+
+    userFoto.src = user.photoURL || 'https://via.placeholder.com/50';
+    userNome.textContent = user.displayName || user.email;
+
+    carregarMensagens();
+  }
+
+  // Mostrar login
+  function mostrarLogin() {
+    loginSection.style.display = 'block';
+    chatSection.style.display = 'none';
+    chatMessages.innerHTML = '';
+  }
+
+  // Enviar mensagem
+  btnSendMsg.onclick = enviarMensagem;
+  inputMsg.addEventListener('keydown', e => {
+    if (e.key === 'Enter') enviarMensagem();
+  });
+
+  async function enviarMensagem(){
+    const texto = inputMsg.value.trim();
+    if (!texto) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Faça login para enviar mensagens');
+      return;
+    }
+
+    // Verifica se banido
+    const snap = await db.ref('usuarios/' + user.uid).once('value');
+    if (snap.exists() && snap.val().banido) {
+      alert('Você está banido e não pode enviar mensagens.');
+      return;
+    }
+
+    const msgRef = db.ref('mensagens').push();
+    await msgRef.set({
+      uid: user.uid,
+      nome: user.displayName || '',
+      fotoPerfil: user.photoURL || '',
+      texto: texto,
+      timestamp: Date.now()
+    });
+
+    inputMsg.value = '';
+  }
+
+  // Carregar mensagens
+  function carregarMensagens(){
+    db.ref('mensagens').limitToLast(50).on('value', snapshot => {
+      const msgs = snapshot.val() || {};
+      chatMessages.innerHTML = '';
+      for (const key in msgs) {
+        const m = msgs[key];
+        const div = document.createElement('div');
+        // Define classe pra alinhamento
+        div.classList.add('msg');
+        if (auth.currentUser && auth.currentUser.uid === m.uid) {
+          div.classList.add('me');
+        } else {
+          div.classList.add('other');
+        }
+
+        const foto = m.fotoPerfil || 'https://via.placeholder.com/40';
+        if (div.classList.contains('me')) {
+          div.innerHTML = `<div class="msgContent">${escapeHtml(m.texto)}</div><img src="${foto}" alt="Foto" class="userPhoto" />`;
+        } else {
+          div.innerHTML = `<img src="${foto}" alt="Foto" class="userPhoto" /><div class="msgContent">${escapeHtml(m.texto)}</div>`;
+        }
+
+        chatMessages.appendChild(div);
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  }
+
+  // Escape HTML básico
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.innerText = text;
+    return div.innerHTML;
+  }
 </script>
 
 </body>
