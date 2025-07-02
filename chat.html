@@ -3,171 +3,163 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat com Login Firebase + Admin</title>
+<title>Chat com Login e Registro Firebase</title>
 
 <style>
   body {
     font-family: Arial, sans-serif;
-    margin:0; padding:0;
-    background:#f4f7f9;
-    overflow-x: hidden;
+    background: #e8f0fe;
+    margin: 0; padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
   }
-  #loginSection {
-    max-width: 400px;
-    margin: 50px auto;
+  .container {
+    max-width: 600px;
+    width: 100%;
+    margin: 20px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
     padding: 20px;
-    text-align: center;
-  }
-  button {
-    background:#1abc9c;
-    border:none;
-    color:white;
-    padding:10px 18px;
-    border-radius:5px;
-    cursor:pointer;
-    font-weight:bold;
-    margin-top:10px;
-  }
-  button:hover {background:#16a085;}
-  #btnLogout {
-    background: #e74c3c;
-  }
-  #userInfo {
-    margin-top:15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #userInfo img {
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    margin-right: 10px;
-    object-fit: cover;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
   }
 
-  /* DIALOG - CHAT */
-  dialog#chatDialog {
-    width: 100vw;
-    height: 100vh;
-    border: none;
-    padding: 0;
-    margin: 0;
-    position: fixed;
-    top: 0; left: 0;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
   }
-  dialog#chatDialog::backdrop {
-    background: rgba(0,0,0,0.6);
-  }
-  dialog#chatDialog:focus-visible {
-    outline: none !important;
-  }
-  #chatHeader {
-    background: #1abc9c;
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  #nomeGrupoSelecionado {
+
+  label {
+    display: block;
+    margin: 10px 0 5px 0;
     font-weight: bold;
-    font-size: 1.2rem;
   }
-  #chatHeader label {
-    cursor: pointer;
-    background: #16a085;
-    padding: 6px 10px;
+
+  input[type="text"], input[type="email"], input[type="password"], input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    font-size: 1rem;
     border-radius: 5px;
-    user-select: none;
-    transition: background 0.3s;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  button {
+    margin-top: 15px;
+    padding: 10px;
+    width: 100%;
+    font-weight: bold;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #155ab6;
+  }
+
+  #toggleLoginRegister {
+    margin-top: 15px;
+    background: none;
+    color: #1a73e8;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
     font-size: 0.9rem;
   }
-  #chatHeader label:hover {
-    background: #138d75;
-  }
-  #chatHeader input[type="file"] {
+
+  #chatSection {
     display: none;
+    flex-direction: column;
+    height: 80vh;
   }
-  #btnCloseChat {
-    background: transparent;
-    border: none;
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    margin-left: 15px;
-  }
+
   #chatMessages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
-    background: #fefefe;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 6px;
+    background: #f7f9fc;
+    margin-bottom: 10px;
   }
+
   .msg {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
   }
-  .msg .fotoUser {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-    object-fit: cover;
-    flex-shrink: 0;
+  .msg.me {
+    justify-content: flex-end;
   }
   .msg .msgContent {
-    background: #1abc9c;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 15px;
     max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    background: #1a73e8;
+    color: white;
     word-wrap: break-word;
   }
   .msg.me .msgContent {
-    background: #16a085;
-    margin-left: auto;
+    background: #0b52d0;
+  }
+  .msg .userPhoto {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
+  }
+  .msg.me .userPhoto {
+    margin-left: 8px;
+    margin-right: 0;
   }
 
-  #inputContainer {
-    display: flex;
-    padding: 15px 20px;
-    border-top: 1px solid #ddd;
-    background: #fafafa;
-  }
   #inputMsg {
-    flex: 1;
+    width: calc(100% - 90px);
     padding: 10px;
     font-size: 1rem;
     border-radius: 6px;
     border: 1px solid #ccc;
-    margin-right: 10px;
   }
+
   #btnSendMsg {
     width: 80px;
-  }
-
-  /* Pesquisa no chat */
-  #searchContainer {
-    padding: 10px 20px;
-    background: #eee;
-    border-bottom: 1px solid #ccc;
-  }
-  #inputSearch {
-    width: 100%;
-    padding: 8px 10px;
+    font-weight: bold;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
     border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
+    cursor: pointer;
   }
 
+  #btnSendMsg:hover {
+    background-color: #155ab6;
+  }
+
+  #userInfo {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  #userInfo img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 10px;
+    object-fit: cover;
+  }
+
+  #btnLogout {
+    margin-top: 10px;
+    width: 100%;
+    background-color: #e53935;
+  }
+  #btnLogout:hover {
+    background-color: #b92b27;
+  }
 </style>
 
 <!-- Firebase -->
@@ -179,42 +171,50 @@
 </head>
 <body>
 
-<!-- Login -->
-<section id="loginSection">
-  <h1>Entrar no Chat</h1>
-  <button id="btnLoginGoogle">Entrar com Google</button>
-  <button id="btnLogout" style="display:none;">Sair</button>
+<div class="container" id="loginRegisterSection">
+  <h2 id="formTitle">Login</h2>
 
-  <div id="userInfo" style="display:none;">
-    <img id="userFoto" alt="Foto do usuário" />
-    <span id="userNome"></span>
-  </div>
-</section>
+  <form id="formLoginRegister">
+    <div id="inputNameDiv" style="display:none;">
+      <label for="inputNome">Nome completo</label>
+      <input type="text" id="inputNome" placeholder="Seu nome completo" />
+    </div>
 
-<!-- Diálogo do Chat -->
-<dialog id="chatDialog">
+    <label for="inputEmail">Email</label>
+    <input type="email" id="inputEmail" placeholder="seu@email.com" required />
 
-  <div id="chatHeader">
-    <span id="nomeGrupoSelecionado">Chat Geral</span>
-    <label for="inputFotoPerfil">Trocar foto</label>
-    <input type="file" id="inputFotoPerfil" accept="image/*" />
-    <button id="btnCloseChat" aria-label="Fechar chat">✖</button>
-  </div>
+    <label for="inputSenha">Senha</label>
+    <input type="password" id="inputSenha" placeholder="Sua senha" required />
 
-  <div id="searchContainer">
-    <input type="text" id="inputSearch" placeholder="Pesquisar mensagens..." />
+    <div id="inputFotoDiv" style="display:none; margin-top:10px;">
+      <label for="inputFoto">Foto de perfil (opcional)</label>
+      <input type="file" id="inputFoto" accept="image/*" />
+    </div>
+
+    <button type="submit" id="btnSubmit">Entrar</button>
+  </form>
+
+  <button id="toggleLoginRegister">Criar uma conta</button>
+</div>
+
+<div class="container" id="chatSection" style="display:none; flex-direction: column;">
+  <div id="userInfo">
+    <img id="userPhoto" src="https://via.placeholder.com/70" alt="Foto usuário" />
+    <span id="userNameDisplay"></span>
   </div>
 
   <div id="chatMessages"></div>
 
-  <div id="inputContainer">
-    <input id="inputMsg" type="text" placeholder="Digite sua mensagem..." autocomplete="off"/>
+  <div style="display: flex; align-items: center;">
+    <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." autocomplete="off" />
     <button id="btnSendMsg">Enviar</button>
   </div>
-</dialog>
+
+  <button id="btnLogout">Sair</button>
+</div>
 
 <script>
-  // Config Firebase
+  // Config Firebase - substitua pelas suas configs do seu projeto
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -224,186 +224,230 @@
     messagingSenderId: "790408726854",
     appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
   };
-
   firebase.initializeApp(firebaseConfig);
+
   const auth = firebase.auth();
   const db = firebase.database();
   const storage = firebase.storage();
 
   // Elementos
-  const btnLoginGoogle = document.getElementById('btnLoginGoogle');
-  const btnLogout = document.getElementById('btnLogout');
-  const userInfo = document.getElementById('userInfo');
-  const userFoto = document.getElementById('userFoto');
-  const userNome = document.getElementById('userNome');
+  const loginRegisterSection = document.getElementById('loginRegisterSection');
+  const chatSection = document.getElementById('chatSection');
 
-  const loginSection = document.getElementById('loginSection');
-  const chatDialog = document.getElementById('chatDialog');
+  const form = document.getElementById('formLoginRegister');
+  const formTitle = document.getElementById('formTitle');
+  const toggleLoginRegister = document.getElementById('toggleLoginRegister');
+
+  const inputNome = document.getElementById('inputNome');
+  const inputEmail = document.getElementById('inputEmail');
+  const inputSenha = document.getElementById('inputSenha');
+  const inputFoto = document.getElementById('inputFoto');
+
+  const inputNameDiv = document.getElementById('inputNameDiv');
+  const inputFotoDiv = document.getElementById('inputFotoDiv');
+
+  const userPhoto = document.getElementById('userPhoto');
+  const userNameDisplay = document.getElementById('userNameDisplay');
+
   const chatMessages = document.getElementById('chatMessages');
   const inputMsg = document.getElementById('inputMsg');
   const btnSendMsg = document.getElementById('btnSendMsg');
-  const inputFotoPerfil = document.getElementById('inputFotoPerfil');
-  const btnCloseChat = document.getElementById('btnCloseChat');
-  const inputSearch = document.getElementById('inputSearch');
 
-  let mensagensCache = {}; // Guarda mensagens para pesquisa
+  const btnLogout = document.getElementById('btnLogout');
 
-  // Login Google
-  btnLoginGoogle.onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(e => alert('Erro no login: '+e.message));
+  // Estado: login ou registro
+  let isLogin = true;
+
+  toggleLoginRegister.onclick = () => {
+    isLogin = !isLogin;
+    if(isLogin){
+      formTitle.textContent = "Login";
+      btnSubmit.textContent = "Entrar";
+      toggleLoginRegister.textContent = "Criar uma conta";
+      inputNameDiv.style.display = "none";
+      inputFotoDiv.style.display = "none";
+    } else {
+      formTitle.textContent = "Registrar";
+      btnSubmit.textContent = "Registrar";
+      toggleLoginRegister.textContent = "Já tenho conta";
+      inputNameDiv.style.display = "block";
+      inputFotoDiv.style.display = "block";
+    }
   };
 
-  btnLogout.onclick = () => {
-    auth.signOut();
+  // Função para upload de foto e pegar URL
+  async function uploadFoto(file, uid) {
+    if(!file) return null;
+
+    const storageRef = storage.ref(`fotosUsuarios/${uid}_${Date.now()}.jpg`);
+    const snapshot = await storageRef.put(file);
+    return await snapshot.ref.getDownloadURL();
+  }
+
+  // Atualizar perfil do usuário (nome e foto)
+  async function atualizarPerfil(nome, urlFoto) {
+    if(auth.currentUser){
+      await auth.currentUser.updateProfile({
+        displayName: nome,
+        photoURL: urlFoto || null
+      });
+      // Atualizar no Realtime Database também
+      await db.ref('usuarios/' + auth.currentUser.uid).set({
+        nome: nome,
+        fotoPerfil: urlFoto || '',
+        email: auth.currentUser.email,
+        banido: false
+      });
+    }
+  }
+
+  // Submissão do form login/registro
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+
+    const email = inputEmail.value.trim();
+    const senha = inputSenha.value.trim();
+
+    if(!email || !senha){
+      alert('Email e senha são obrigatórios.');
+      return;
+    }
+
+    if(isLogin){
+      // Login
+      try {
+        await auth.signInWithEmailAndPassword(email, senha);
+      } catch(error){
+        alert('Erro no login: ' + error.message);
+      }
+    } else {
+      // Registro
+      const nome = inputNome.value.trim();
+      if(!nome){
+        alert('Informe seu nome para registrar.');
+        return;
+      }
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
+        const uid = userCredential.user.uid;
+
+        let urlFoto = null;
+        if(inputFoto.files.length > 0){
+          urlFoto = await uploadFoto(inputFoto.files[0], uid);
+        }
+
+        await atualizarPerfil(nome, urlFoto);
+        alert('Registro realizado com sucesso! Você já está logado.');
+
+      } catch(error){
+        alert('Erro no registro: ' + error.message);
+      }
+    }
   };
 
-  btnCloseChat.onclick = () => {
-    chatDialog.close();
-    inputSearch.value = '';
-    inputMsg.value = '';
-    chatMessages.innerHTML = '';
-  };
-
-  // Ao mudar usuário logado
+  // Monitorar estado de login para mostrar/ocultar telas
   auth.onAuthStateChanged(user => {
     if(user){
-      loginSection.style.display = 'none';
-      btnLogout.style.display = 'inline-block';
-      userInfo.style.display = 'flex';
-
-      userFoto.src = user.photoURL || 'https://via.placeholder.com/70';
-      userNome.textContent = user.displayName || user.email || 'Usuário';
-
-      // Cria no DB se não existir
-      db.ref('usuarios/' + user.uid).once('value').then(snap => {
-        if(!snap.exists()){
-          db.ref('usuarios/' + user.uid).set({
-            nome: user.displayName || '',
-            email: user.email || '',
-            fotoPerfil: user.photoURL || '',
-            banido: false
-          });
-        }
-      });
-
-      // Abre o chat automaticamente
-      if (!chatDialog.open) {
-        chatDialog.showModal();
+      if(user.emailVerified === false){
+        // Opcional: forçar verificar email para segurança
+        // user.sendEmailVerification();
+        // alert('Por favor, verifique seu email antes de entrar.');
+        // auth.signOut();
+        // return;
       }
+
+      loginRegisterSection.style.display = 'none';
+      chatSection.style.display = 'flex';
+
+      userPhoto.src = user.photoURL || 'https://via.placeholder.com/70';
+      userNameDisplay.textContent = user.displayName || user.email;
+
       carregarMensagens();
     } else {
-      loginSection.style.display = 'block';
-      btnLogout.style.display = 'none';
-      userInfo.style.display = 'none';
-      if (chatDialog.open) chatDialog.close();
+      loginRegisterSection.style.display = 'block';
+      chatSection.style.display = 'none';
+      chatMessages.innerHTML = '';
     }
   });
 
   // Enviar mensagem
   btnSendMsg.onclick = enviarMensagem;
   inputMsg.addEventListener('keydown', e => {
-    if(e.key === 'Enter') enviarMensagem();
+    if(e.key === 'Enter'){
+      enviarMensagem();
+    }
   });
 
   function enviarMensagem(){
     const texto = inputMsg.value.trim();
-    if(texto === '') return;
+    if(!texto) return;
 
     const user = auth.currentUser;
-    if(!user) return alert('Faça login para enviar mensagens');
+    if(!user) {
+      alert('Você precisa estar logado para enviar mensagens.');
+      return;
+    }
 
+    // Verifica banimento no Realtime Database (pode adaptar essa lógica)
     db.ref('usuarios/' + user.uid).once('value').then(snap => {
-      if(snap.exists() && snap.val().banido){
-        alert('Você está banido e não pode enviar mensagens.');
-        return;
+      if(snap.exists()){
+        const data = snap.val();
+        if(data.banido){
+          alert('Você está banido e não pode enviar mensagens.');
+          return;
+        }
+
+        // Gravar mensagem
+        const msgRef = db.ref('mensagens').push();
+        msgRef.set({
+          uid: user.uid,
+          nome: user.displayName || '',
+          fotoPerfil: user.photoURL || '',
+          texto: texto,
+          timestamp: Date.now()
+        });
+        inputMsg.value = '';
+      } else {
+        alert('Usuário não encontrado no banco de dados.');
+      }
+    });
+  }
+
+  // Mostrar mensagens
+  function carregarMensagens(){
+    db.ref('mensagens').limitToLast(50).on('value', snapshot => {
+      const msgs = snapshot.val() || {};
+      chatMessages.innerHTML = '';
+
+      for(const key in msgs){
+        const m = msgs[key];
+        const div = document.createElement('div');
+        div.classList.add('msg');
+        if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
+
+        const foto = m.fotoPerfil || 'https://via.placeholder.com/40';
+        div.innerHTML = `
+          ${div.classList.contains('me') ? `<div class="msgContent">${escapeHtml(m.texto)}</div><img src="${foto}" class="userPhoto" />` : `<img src="${foto}" class="userPhoto" /><div class="msgContent">${escapeHtml(m.texto)}</div>`}
+        `;
+        chatMessages.appendChild(div);
       }
 
-      // Salva mensagem no grupo geral
-      const msgRef = db.ref('mensagens').push();
-      msgRef.set({
-        uid: user.uid,
-        nome: user.displayName || '',
-        fotoPerfil: user.photoURL || '',
-        texto: texto,
-        timestamp: Date.now()
-      });
-      inputMsg.value = '';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
-  // Carregar mensagens e atualizar display
-  function carregarMensagens(){
-    db.ref('mensagens').limitToLast(200).on('value', snapshot => {
-      const msgs = snapshot.val() || {};
-      mensagensCache = msgs;
-      renderizarMensagens(msgs);
-    });
-  }
-
-  // Renderizar mensagens (filtra por pesquisa se existir)
-  function renderizarMensagens(mensagens){
-    const filtro = inputSearch.value.toLowerCase().trim();
-    chatMessages.innerHTML = '';
-    for(const key in mensagens){
-      const m = mensagens[key];
-      if(filtro && !m.texto.toLowerCase().includes(filtro)) continue;
-
-      const div = document.createElement('div');
-      div.classList.add('msg');
-      if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
-
-      div.innerHTML = `
-        <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" alt="Foto de perfil" />
-        <div class="msgContent">${escapeHtml(m.texto)}</div>
-      `;
-      chatMessages.appendChild(div);
-    }
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  // Pesquisa mensagens em tempo real
-  inputSearch.addEventListener('input', () => {
-    renderizarMensagens(mensagensCache);
-  });
-
-  // Escape HTML para segurança básica
+  // Escape HTML simples para evitar XSS
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.innerText = text;
     return div.innerHTML;
   }
 
-  // Upload foto perfil pelo chat
-  inputFotoPerfil.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        alert('Você precisa estar logado para trocar foto.');
-        return;
-      }
-
-      const storageRef = storage.ref(`usuariosFotos/${user.uid}_${Date.now()}.jpg`);
-      const snapshot = await storageRef.put(file);
-      const urlFoto = await snapshot.ref.getDownloadURL();
-
-      // Atualiza DB e foto do usuário no chat e login
-      await db.ref(`usuarios/${user.uid}`).update({ fotoPerfil: urlFoto });
-      userFoto.src = urlFoto;
-
-      // Atualiza foto no perfil do Firebase Auth para sincronizar em mensagens futuras
-      await user.updateProfile({ photoURL: urlFoto });
-
-      alert('Foto atualizada com sucesso!');
-    } catch (err) {
-      alert('Erro ao enviar foto: ' + err.message);
-    }
-    e.target.value = '';
-  });
-
+  // Logout
+  btnLogout.onclick = () => {
+    auth.signOut();
+  };
 </script>
 
 </body>
