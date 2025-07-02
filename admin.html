@@ -3,141 +3,142 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel Admin Avançado</title>
+<title>Painel Admin - Chat Firebase</title>
 
 <style>
-  /* ... mesmíssimo CSS do admin bonito que te mandei ... */
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f7f9fc;
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+    margin: 0; padding: 0;
+  }
+  h1 {
+    background: #34495e;
+    color: white;
     margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-    align-items: flex-start;
+    padding: 20px;
+    text-align: center;
   }
-  #painelAdmin {
+  #container {
+    max-width: 1000px;
+    margin: 20px auto;
     background: white;
-    margin: 20px;
-    padding: 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
-    max-width: 700px;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  section {
+    margin-bottom: 40px;
+  }
+  h2 {
+    border-bottom: 2px solid #1abc9c;
+    padding-bottom: 5px;
+    color: #1abc9c;
+  }
+  table {
     width: 100%;
+    border-collapse: collapse;
   }
-  /* reutilize o CSS do painel anterior */
-
-  /* Usuário */
-  #listaUsuariosAdmin > div {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #e0e6f2;
-    padding: 12px 0;
-    gap: 12px;
+  table, th, td {
+    border: 1px solid #ddd;
   }
-  #listaUsuariosAdmin > div:last-child {
-    border-bottom: none;
+  th, td {
+    padding: 10px;
+    text-align: center;
   }
-  img.userFoto {
-    width: 48px;
-    height: 48px;
+  th {
+    background: #1abc9c;
+    color: white;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    background: #1abc9c;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #16a085;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+  img.fotoUser {
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
-  }
-  .infoUsuario {
-    flex-grow: 1;
-    font-weight: 600;
-    color: #34495e;
-    user-select: text;
-  }
-  input[type="file"].inputFotoUsuario {
-    display: none;
-  }
-  button.btnFotoUsuario {
-    background-color: #3498db;
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background-color 0.3s ease;
-  }
-  button.btnFotoUsuario:hover {
-    background-color: #2980b9;
-  }
-
-  /* Grupos */
-  #listaGruposAdmin {
-    margin-top: 40px;
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #d1d9e6;
-    border-radius: 10px;
-    padding: 12px;
-    background-color: #fafafa;
-  }
-  #listaGruposAdmin > div {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #e0e6f2;
-    padding: 10px 0;
-  }
-  #listaGruposAdmin > div:last-child {
-    border-bottom: none;
-  }
-  .nomeGrupo {
-    font-weight: 600;
-    font-size: 16px;
-    color: #2c3e50;
-    flex-grow: 1;
-    user-select: text;
-  }
-  input.editarNomeGrupo {
-    font-size: 16px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    width: 100%;
-  }
-  button.btnEditarGrupo, button.btnSalvarGrupo {
-    background-color: #1abc9c;
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-left: 10px;
-    transition: background-color 0.3s ease;
-  }
-  button.btnEditarGrupo:hover, button.btnSalvarGrupo:hover {
-    background-color: #16a085;
   }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
 
-<div id="painelAdmin">
-  <h2>Painel Admin Avançado (Sem Login)</h2>
+<h1>Painel Admin</h1>
+<div id="container">
 
-  <h3>Gerenciar Usuários</h3>
-  <div id="listaUsuariosAdmin">Carregando usuários...</div>
+  <section id="usuariosSection">
+    <h2>Usuários</h2>
+    <table id="tabelaUsuarios">
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>UID</th>
+          <th>Nome</th>
+          <th>Banir/Desbanir</th>
+          <th>Alterar Foto URL</th>
+          <th>Alterar Nome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="6">Carregando usuários...</td></tr>
+      </tbody>
+    </table>
+  </section>
 
-  <h3>Gerenciar Grupos</h3>
-  <div id="listaGruposAdmin">Carregando grupos...</div>
+  <section id="gruposSection">
+    <h2>Grupos</h2>
+    <table id="tabelaGrupos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome do Grupo</th>
+          <th>Alterar Nome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3">Carregando grupos...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="solicitacoesSection">
+    <h2>Solicitações de Novos Grupos</h2>
+    <table id="tabelaSolicitacoes">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome Solicitado</th>
+          <th>Solicitante (UID)</th>
+          <th>Aprovar</th>
+          <th>Rejeitar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5">Carregando solicitações...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
 </div>
 
 <script>
-  // Config do Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -150,126 +151,186 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  const storage = firebase.storage();
 
-  const listaUsuariosAdmin = document.getElementById("listaUsuariosAdmin");
-  const listaGruposAdmin = document.getElementById("listaGruposAdmin");
+  const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
+  const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
+  const tabelaSolicitacoesBody = document.querySelector('#tabelaSolicitacoes tbody');
 
-  // Carregar usuários
-  async function carregarUsuariosAdmin() {
-    listaUsuariosAdmin.innerHTML = "Carregando usuários...";
-    const snapshot = await db.ref("usuarios").once("value");
-    const usuarios = snapshot.val();
-    if (!usuarios) {
-      listaUsuariosAdmin.innerHTML = "Nenhum usuário cadastrado.";
-      return;
-    }
+  // Carrega usuários
+  function carregarUsuarios() {
+    db.ref('usuarios').on('value', snapshot => {
+      const users = snapshot.val() || {};
+      tabelaUsuariosBody.innerHTML = '';
+      if(Object.keys(users).length === 0){
+        tabelaUsuariosBody.innerHTML = '<tr><td colspan="6">Nenhum usuário encontrado.</td></tr>';
+        return;
+      }
 
-    listaUsuariosAdmin.innerHTML = "";
+      for (const uid in users) {
+        const user = users[uid];
+        const banido = user.banido || false;
 
-    for (const uid in usuarios) {
-      const userData = usuarios[uid];
+        const tr = document.createElement('tr');
 
-      const userDiv = document.createElement("div");
+        tr.innerHTML = `
+          <td><img src="${user.fotoPerfil || 'https://via.placeholder.com/50'}" class="fotoUser" /></td>
+          <td>${uid}</td>
+          <td><input type="text" value="${user.nome || ''}" data-uid="${uid}" class="nomeUsuarioInput" /></td>
+          <td><button data-uid="${uid}" class="btnBanir">${banido ? 'Desbanir' : 'Banir'}</button></td>
+          <td><input type="text" value="${user.fotoPerfil || ''}" data-uid="${uid}" class="fotoUsuarioInput" /></td>
+          <td><button data-uid="${uid}" class="btnAlterar">Alterar</button></td>
+        `;
 
-      userDiv.innerHTML = `
-        <img class="userFoto" src="${userData.fotoPerfil}" alt="${userData.nome}" />
-        <div class="infoUsuario">
-          ${userData.nome} <br/>
-          <small>UID: ${uid}</small>
-        </div>
-        <label>
-          <button class="btnFotoUsuario">Alterar Foto</button>
-          <input type="file" accept="image/*" class="inputFotoUsuario" data-uid="${uid}" />
-        </label>
-      `;
+        tabelaUsuariosBody.appendChild(tr);
+      }
 
-      // Evento para upload da nova foto
-      const inputFile = userDiv.querySelector(".inputFotoUsuario");
-      inputFile.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const uid = e.target.dataset.uid;
-        const ext = file.name.split('.').pop();
-        const nomeArquivo = `usuarios/${uid}/fotoPerfil.${ext}`;
-        const ref = storage.ref(nomeArquivo);
-
-        try {
-          const uploadTask = await ref.put(file);
-          const url = await uploadTask.ref.getDownloadURL();
-          await db.ref(`usuarios/${uid}/fotoPerfil`).set(url);
-          alert("Foto do usuário atualizada!");
-          carregarUsuariosAdmin(); // Recarrega para atualizar imagem
-        } catch (err) {
-          alert("Erro ao enviar foto: " + err.message);
-        }
+      // Eventos dos botões banir/desbanir
+      document.querySelectorAll('.btnBanir').forEach(btn => {
+        btn.onclick = e => {
+          const uid = e.target.dataset.uid;
+          const userRef = db.ref('usuarios/' + uid);
+          userRef.once('value').then(snap => {
+            const data = snap.val() || {};
+            const novoStatus = !(data.banido || false);
+            userRef.update({ banido: novoStatus });
+          });
+        };
       });
 
-      listaUsuariosAdmin.appendChild(userDiv);
-    }
+      // Evento alterar nome/foto
+      document.querySelectorAll('.btnAlterar').forEach(btn => {
+        btn.onclick = e => {
+          const uid = e.target.dataset.uid;
+          const tr = e.target.closest('tr');
+          const novoNome = tr.querySelector('.nomeUsuarioInput').value.trim();
+          const novaFoto = tr.querySelector('.fotoUsuarioInput').value.trim();
+
+          if (novoNome === '') {
+            alert('Nome não pode ser vazio');
+            return;
+          }
+
+          db.ref('usuarios/' + uid).update({
+            nome: novoNome,
+            fotoPerfil: novaFoto
+          }).then(() => {
+            alert('Dados atualizados');
+          });
+        };
+      });
+
+    });
   }
 
-  // Carregar grupos
-  async function carregarGruposAdmin() {
-    listaGruposAdmin.innerHTML = "Carregando grupos...";
-    const snapshot = await db.ref("grupos").once("value");
-    const grupos = snapshot.val();
-    if (!grupos) {
-      listaGruposAdmin.innerHTML = "Nenhum grupo cadastrado.";
-      return;
-    }
+  // Carrega grupos
+  function carregarGrupos() {
+    db.ref('grupos').on('value', snapshot => {
+      const grupos = snapshot.val() || {};
+      tabelaGruposBody.innerHTML = '';
+      if(Object.keys(grupos).length === 0){
+        tabelaGruposBody.innerHTML = '<tr><td colspan="3">Nenhum grupo encontrado.</td></tr>';
+        return;
+      }
 
-    listaGruposAdmin.innerHTML = "";
+      for (const grupoId in grupos) {
+        const grupo = grupos[grupoId];
+        const tr = document.createElement('tr');
 
-    for (const grupoId in grupos) {
-      const grupo = grupos[grupoId];
+        tr.innerHTML = `
+          <td>${grupoId}</td>
+          <td><input type="text" value="${grupo.nome || ''}" data-id="${grupoId}" class="nomeGrupoInput" /></td>
+          <td><button data-id="${grupoId}" class="btnAlterarGrupo">Alterar Nome</button></td>
+        `;
 
-      const grupoDiv = document.createElement("div");
+        tabelaGruposBody.appendChild(tr);
+      }
 
-      grupoDiv.innerHTML = `
-        <span class="nomeGrupo" id="nomeGrupo_${grupoId}">${grupo.nome}</span>
-        <input type="text" class="editarNomeGrupo" id="inputNome_${grupoId}" value="${grupo.nome}" style="display:none" />
-        <button class="btnEditarGrupo" id="btnEditar_${grupoId}">Editar</button>
-        <button class="btnSalvarGrupo" id="btnSalvar_${grupoId}" style="display:none">Salvar</button>
-      `;
+      // Evento alterar nome grupo
+      document.querySelectorAll('.btnAlterarGrupo').forEach(btn => {
+        btn.onclick = e => {
+          const grupoId = e.target.dataset.id;
+          const tr = e.target.closest('tr');
+          const novoNome = tr.querySelector('.nomeGrupoInput').value.trim();
 
-      listaGruposAdmin.appendChild(grupoDiv);
+          if (novoNome === '') {
+            alert('Nome do grupo não pode ser vazio');
+            return;
+          }
 
-      // Botões editar e salvar
-      const btnEditar = grupoDiv.querySelector(`#btnEditar_${grupoId}`);
-      const btnSalvar = grupoDiv.querySelector(`#btnSalvar_${grupoId}`);
-      const spanNome = grupoDiv.querySelector(`#nomeGrupo_${grupoId}`);
-      const inputNome = grupoDiv.querySelector(`#inputNome_${grupoId}`);
+          db.ref('grupos/' + grupoId).update({ nome: novoNome })
+            .then(() => alert('Nome do grupo atualizado'));
+        };
+      });
 
-      btnEditar.onclick = () => {
-        spanNome.style.display = 'none';
-        inputNome.style.display = 'inline-block';
-        btnEditar.style.display = 'none';
-        btnSalvar.style.display = 'inline-block';
-        inputNome.focus();
-      };
-
-      btnSalvar.onclick = async () => {
-        const novoNome = inputNome.value.trim();
-        if (!novoNome) {
-          alert("Digite um nome válido para o grupo.");
-          inputNome.focus();
-          return;
-        }
-        await db.ref(`grupos/${grupoId}/nome`).set(novoNome);
-        spanNome.textContent = novoNome;
-        spanNome.style.display = 'inline-block';
-        inputNome.style.display = 'none';
-        btnEditar.style.display = 'inline-block';
-        btnSalvar.style.display = 'none';
-        alert("Nome do grupo atualizado!");
-      };
-    }
+    });
   }
 
-  carregarUsuariosAdmin();
-  carregarGruposAdmin();
+  // Carrega solicitações grupos
+  function carregarSolicitacoes() {
+    db.ref('solicitacoesGrupos').on('value', snapshot => {
+      const solicitacoes = snapshot.val() || {};
+      tabelaSolicitacoesBody.innerHTML = '';
+      if(Object.keys(solicitacoes).length === 0){
+        tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Nenhuma solicitação pendente.</td></tr>';
+        return;
+      }
+
+      for (const id in solicitacoes) {
+        const s = solicitacoes[id];
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${id}</td>
+          <td>${s.nome}</td>
+          <td>${s.uidSolicitante}</td>
+          <td><button data-id="${id}" class="btnAprovar">Aprovar</button></td>
+          <td><button data-id="${id}" class="btnRejeitar">Rejeitar</button></td>
+        `;
+
+        tabelaSolicitacoesBody.appendChild(tr);
+      }
+
+      // Evento aprovar
+      document.querySelectorAll('.btnAprovar').forEach(btn => {
+        btn.onclick = e => {
+          const id = e.target.dataset.id;
+          const solicitacaoRef = db.ref('solicitacoesGrupos/' + id);
+
+          solicitacaoRef.once('value').then(snap => {
+            const dados = snap.val();
+            if(!dados) return alert('Solicitação não encontrada');
+
+            // Criar novo grupo
+            const novoGrupoRef = db.ref('grupos').push();
+            novoGrupoRef.set({
+              nome: dados.nome
+            }).then(() => {
+              // Remover solicitação
+              solicitacaoRef.remove();
+              alert('Grupo criado e solicitação removida');
+            });
+          });
+        };
+      });
+
+      // Evento rejeitar
+      document.querySelectorAll('.btnRejeitar').forEach(btn => {
+        btn.onclick = e => {
+          const id = e.target.dataset.id;
+          db.ref('solicitacoesGrupos/' + id).remove().then(() => {
+            alert('Solicitação rejeitada e removida');
+          });
+        };
+      });
+
+    });
+  }
+
+  // Inicializa
+  carregarUsuarios();
+  carregarGrupos();
+  carregarSolicitacoes();
+
 </script>
 
 </body>
