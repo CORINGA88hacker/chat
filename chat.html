@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat com Firebase e Grupos</title>
+<title>Chat com Firebase e Fotos/Grupos Reais</title>
 
 <style>
   html, body {
@@ -12,14 +12,12 @@
     font-family: Arial, sans-serif;
     background: #f0f0f0;
   }
-
   #app {
     display: flex;
     height: 100vh;
     width: 100vw;
     overflow: hidden;
   }
-
   #menuGrupos {
     width: 250px;
     background: #2c3e50;
@@ -29,7 +27,6 @@
     padding: 10px;
     box-sizing: border-box;
   }
-
   #menuGrupos h2 {
     margin-top: 0;
     font-size: 20px;
@@ -38,12 +35,10 @@
     border-bottom: 1px solid #34495e;
     padding-bottom: 10px;
   }
-
   #listaGrupos {
     flex-grow: 1;
     overflow-y: auto;
   }
-
   .grupoItem {
     padding: 10px;
     margin-bottom: 8px;
@@ -52,11 +47,9 @@
     background: #34495e;
     transition: background 0.3s;
   }
-
   .grupoItem:hover, .grupoItem.selecionado {
     background: #1abc9c;
   }
-
   #areaChat {
     flex-grow: 1;
     background: white;
@@ -64,7 +57,6 @@
     flex-direction: column;
     height: 100%;
   }
-
   #headerChat {
     background: #1abc9c;
     color: white;
@@ -72,37 +64,42 @@
     font-size: 18px;
     border-bottom: 2px solid #16a085;
   }
-
   #mensagens {
     flex-grow: 1;
     overflow-y: auto;
     padding: 15px;
     box-sizing: border-box;
   }
-
   .mensagem {
     margin-bottom: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
   }
-
+  .mensagem .fotoUsuario {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  .mensagem .conteudo {
+    background: #ecf0f1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 70%;
+    word-break: break-word;
+  }
   .mensagem .nome {
     font-weight: bold;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
+    font-size: 14px;
   }
-
-  .mensagem .texto {
-    background: #ecf0f1;
-    padding: 8px 12px;
-    border-radius: 8px;
-    display: inline-block;
-    white-space: pre-wrap;
-  }
-
   #inputArea {
     display: flex;
     padding: 10px;
     border-top: 1px solid #ddd;
   }
-
   #inputMsg {
     flex-grow: 1;
     padding: 10px;
@@ -111,7 +108,6 @@
     border: 1px solid #ccc;
     outline: none;
   }
-
   #btnEnviar {
     margin-left: 10px;
     background: #1abc9c;
@@ -123,7 +119,6 @@
     font-weight: bold;
     transition: background 0.3s;
   }
-
   #btnEnviar:hover {
     background: #16a085;
   }
@@ -138,7 +133,7 @@
 <div id="app">
   <div id="menuGrupos">
     <h2>Grupos</h2>
-    <div id="listaGrupos"></div>
+    <div id="listaGrupos">Carregando grupos...</div>
   </div>
 
   <div id="areaChat">
@@ -152,7 +147,7 @@
 </div>
 
 <script>
-  // Config do Firebase - use suas configs reais aqui
+  // Config do Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -166,11 +161,12 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  const grupos = [
-    { id: 'grupo1', nome: 'Grupo 1' },
-    { id: 'grupo2', nome: 'Grupo 2' },
-    { id: 'grupo3', nome: 'Grupo 3' }
-  ];
+  // Simulação de usuário logado - substitua pela autenticação real
+  const usuarioAtual = {
+    uid: 'user1', // Id único do usuário logado
+    nome: 'Maninho',
+    fotoPerfil: 'https://i.pravatar.cc/150?img=5'
+  };
 
   const listaGruposDiv = document.getElementById('listaGrupos');
   const headerChat = document.getElementById('headerChat');
@@ -180,21 +176,39 @@
 
   let grupoSelecionado = null;
   let mensagensListener = null;
+  let gruposDados = {};
 
-  function mostrarGrupos() {
-    listaGruposDiv.innerHTML = '';
-    grupos.forEach(g => {
-      const div = document.createElement('div');
-      div.className = 'grupoItem';
-      div.textContent = g.nome;
-      div.onclick = () => selecionarGrupo(g.id);
-      listaGruposDiv.appendChild(div);
+  // Carrega grupos do Firebase
+  function carregarGrupos() {
+    listaGruposDiv.innerHTML = 'Carregando grupos...';
+    const gruposRef = db.ref('grupos');
+    gruposRef.on('value', snapshot => {
+      gruposDados = snapshot.val() || {};
+      listaGruposDiv.innerHTML = '';
+      for (const grupoId in gruposDados) {
+        const grupo = gruposDados[grupoId];
+        const div = document.createElement('div');
+        div.className = 'grupoItem';
+        div.textContent = grupo.nome || grupoId;
+        div.onclick = () => selecionarGrupo(grupoId);
+        if (grupoSelecionado === grupoId) {
+          div.classList.add('selecionado');
+        }
+        listaGruposDiv.appendChild(div);
+      }
+      if (!grupoSelecionado) {
+        headerChat.textContent = 'Selecione um grupo';
+        inputMsg.disabled = true;
+        btnEnviar.disabled = true;
+        mensagensDiv.innerHTML = '';
+      }
     });
   }
 
+  // Seleciona grupo, mostra mensagens e escuta novas mensagens
   function selecionarGrupo(id) {
     grupoSelecionado = id;
-    headerChat.textContent = grupos.find(g => g.id === id).nome;
+    headerChat.textContent = gruposDados[id].nome || id;
 
     document.querySelectorAll('.grupoItem').forEach(el => {
       el.classList.toggle('selecionado', el.textContent === headerChat.textContent);
@@ -202,16 +216,16 @@
 
     inputMsg.disabled = false;
     btnEnviar.disabled = false;
+    inputMsg.value = '';
     inputMsg.focus();
 
     carregarMensagensFirebase(id);
   }
 
-  // Carregar mensagens do Firebase e ouvir atualizações
+  // Carrega mensagens do Firebase e mostra com nome + foto
   function carregarMensagensFirebase(grupoId) {
     mensagensDiv.innerHTML = 'Carregando mensagens...';
 
-    // Remove listener antigo
     if (mensagensListener) {
       mensagensListener.off();
     }
@@ -219,36 +233,52 @@
     const mensagensRef = db.ref('mensagens/' + grupoId);
 
     mensagensListener = mensagensRef;
-    mensagensRef.off(); // limpa listeners antigos
+    mensagensRef.off();
 
-    mensagensRef.on('value', snapshot => {
+    mensagensRef.on('value', async snapshot => {
       const msgs = snapshot.val() || {};
       mensagensDiv.innerHTML = '';
-      Object.keys(msgs).forEach(key => {
+
+      // Para cada mensagem vamos pegar info do usuário que enviou
+      for (const key in msgs) {
         const msg = msgs[key];
-        adicionarMensagemNaTela(msg.nome, msg.texto);
-      });
+        const usuarioRef = db.ref('usuarios/' + msg.uid);
+        const usuarioSnap = await usuarioRef.once('value');
+        const usuarioData = usuarioSnap.val() || {};
+
+        adicionarMensagemNaTela(
+          usuarioData.nome || 'Usuário',
+          usuarioData.fotoPerfil || 'https://via.placeholder.com/40',
+          msg.texto
+        );
+      }
       mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
     });
   }
 
-  // Adiciona mensagem no HTML
-  function adicionarMensagemNaTela(nome, texto) {
+  function adicionarMensagemNaTela(nome, foto, texto) {
     const div = document.createElement('div');
     div.className = 'mensagem';
-    div.innerHTML = `<div class="nome">${nome}</div><div class="texto">${texto}</div>`;
+
+    div.innerHTML = `
+      <img src="${foto}" alt="${nome}" class="fotoUsuario" />
+      <div class="conteudo">
+        <div class="nome">${nome}</div>
+        <div class="texto">${texto}</div>
+      </div>
+    `;
     mensagensDiv.appendChild(div);
   }
 
-  // Envia mensagem para Firebase
+  // Envia mensagem para Firebase com uid, nome e foto do usuário atual
   btnEnviar.onclick = () => {
     const texto = inputMsg.value.trim();
     if (!texto || !grupoSelecionado) return;
 
-    // Você pode substituir "Você" por nome do usuário real depois
     const msg = {
-      nome: "Você",
-      texto
+      uid: usuarioAtual.uid,
+      texto,
+      timestamp: Date.now()
     };
 
     const mensagensRef = db.ref('mensagens/' + grupoSelecionado);
@@ -258,7 +288,7 @@
     });
   };
 
-  mostrarGrupos();
+  carregarGrupos();
 </script>
 
 </body>
