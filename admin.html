@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Admin - Chat Edu MT</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    background: #f5f5f5;
+  }
+  #login, #painelAdmin {
+    max-width: 480px;
+    margin: auto;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px #aaa;
+  }
+  #painelAdmin {
+    display: none;
+  }
+  #listaUsuariosAdmin > div {
+    border: 1px solid #ccc;
+    margin: 6px 0;
+    padding: 6px;
+    border-radius: 6px;
+    background: #e6ffe6;
+  }
+  #listaUsuariosAdmin > div.banido {
+    background: #ffe6e6;
+  }
+  img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  input[type="number"] {
+    width: 120px;
+    margin-right: 6px;
+  }
+  button {
+    cursor: pointer;
+  }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+</head>
+<body>
+
+<div id="login">
+  <h2>Login Admin</h2>
+  <input type="email" id="emailAdmin" placeholder="Email admin" />
+  <input type="password" id="senhaAdmin" placeholder="Senha" />
+  <button id="btnLoginAdmin">Entrar</button>
+  <p id="msgLoginAdmin" style="color:red;"></p>
+</div>
+
+<div id="painelAdmin">
+  <h2>Painel Admin</h2>
+
+  <h3>Enviar foto de perfil</h3>
+  <input type="file" id="uploadFoto" />
+  <button id="btnUploadFoto">Enviar Foto</button>
+  <p id="msgUpload"></p>
+
+  <hr />
+
+  <h3>Gerenciar usuários</h3>
+  <div id="listaUsuariosAdmin">Carregando usuários...</div>
+
+  <button id="btnLogoutAdmin" style="margin-top:10px;">Sair</button>
+</div>
+
+<script>
+  // Coloque seu firebaseConfig aqui (igual ao outro)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+  const storage = firebase.storage();
+
+  const loginDiv = document.getElementById("login");
+  const painelAdminDiv = document.getElementById("painelAdmin");
+  const msgLoginAdmin = document.getElementById("msgLoginAdmin");
+
+  const listaUsuariosAdmin = document.getElementById("listaUsuariosAdmin");
+  const btnLogoutAdmin = document.getElementById("btnLogoutAdmin");
+
+  // Login admin
+  document.getElementById("btnLoginAdmin").onclick = () => {
+    const email = document.getElementById("emailAdmin").value.trim();
+    const senha = document.getElementById("senhaAdmin").value;
+    msgLoginAdmin.textContent = "";
+
+    auth.signInWithEmailAndPassword(email, senha)
+      .then(() => {
+        if (auth.currentUser.email !== "seuadmin@edu.mt.gov.br") {
+          msgLoginAdmin.textContent = "Acesso negado: não é admin.";
+          auth.signOut();
+          return;
+        }
+        loginDiv.style.display = "none";
+        painelAdminDiv.style.display = "block";
+        carregarUsuariosAdmin();
+      })
+      .catch(err => {
+        msgLoginAdmin.textContent = err.message;
+      });
+  };
+
+  btnLogoutAdmin.onclick = () => {
+    auth.signOut();
+    painelAdminDiv.style.display = "none";
+    loginDiv.style.display = "block";
+  };
+
+  // Carregar lista usuarios
+  async function carregarUsuariosAdmin() {
+    listaUsuariosAdmin.innerHTML = "Carregando usuários...";
+    const snapshot = await db.ref("usuarios").once("value");
+    const usuarios = snapshot.val();
+    if (!usuarios) {
+      listaUsuariosAdmin.innerHTML = "Nenhum usuário cadastrado.";
+      return;
+    }
+    listaUsuariosAdmin.innerHTML = "";
+
+    for (const uid in usuarios) {
+      const userData = usuarios[uid];
+
+      // Verifica banimento
+      const banSnap = await db.ref("banidos/" + uid).once("value");
+      const banData = banSnap.val();
+
+      const agora = Date.now();
+      const banido = banData && banData.banido_ate > agora;
+
+      const div = document.createElement("div");
+      div.className = banido ? "banido" : "";
+      div.innerHTML = `
+        <img src="${userData.fotoPerfil}" alt="${userData.nome}" />
+        <strong>${userData.nome}</strong> (UID: ${uid})<br/>
+        Banido: <span>${banido ? "Sim, até " + new Date(banData.banido_ate).toLocaleString() : "Não"}</span><br/>
+        <input type="number" min="1" placeholder="Minutos de ban" id="banTempo_${uid}" />
+        <button onclick="banirUsuario('${uid}')">Banir</button>
+        <button onclick="desbanirUsuario('${uid}')">Desbanir</button>
+      `;
+      listaUsuariosAdmin.appendChild(div);
+    }
+  }
+
+  // Funções globais para banir/desbanir (precisam estar no window)
+  window.banirUsuario = async (uid) => {
+    const input = document.getElementById("banTempo_" + uid);
+    const minutos = parseInt(input.value);
+    if (!minutos || minutos <= 0) {
+      alert("Digite um tempo válido em minutos.");
+      return;
+    }
+    const banido_ate = Date.now() + minutos * 60000;
+    await db.ref("banidos/" + uid).set({ banido_ate });
+    alert("Usuário banido por " + minutos + " minutos.");
+    carregarUsuariosAdmin();
+  };
+
+  window.desbanirUsuario = async (uid) => {
+    await db.ref("banidos/" + uid).remove();
+    alert("Usuário desbanido.");
+    carregarUsuariosAdmin();
+  };
+
+  // Upload foto perfil admin
+  const btnUploadFoto = document.getElementById("btnUploadFoto");
+  const uploadFotoInput = document.getElementById("uploadFoto");
+  const msgUpload = document.getElementById("msgUpload");
+
+  btnUploadFoto.onclick = () => {
+    const file = uploadFotoInput.files[0];
+    if (!file) {
+      alert("Selecione um arquivo para enviar!");
+      return;
+    }
+    const ref = storage.ref("fotosPerfil/" + file.name);
+    const uploadTask = ref.put(file);
+
+    uploadTask.on("state_changed",
+      null,
+      error => {
+        msgUpload.style.color = "red";
+        msgUpload.textContent = "Erro no upload: " + error.message;
+      },
+      () => {
+        uploadTask.snapshot.ref.getDownloadURL().then(url => {
+          db.ref("fotosPerfil").push(url);
+          msgUpload.style.color = "green";
+          msgUpload.textContent = "Foto enviada com sucesso!";
+          uploadFotoInput.value = "";
+          carregarUsuariosAdmin();
+        });
+      });
+  };
+
+</script>
+
+</body>
+</html>
