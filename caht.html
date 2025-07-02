@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat Grupos + Privado Firebase</title>
+
+<style>
+  html, body {
+    margin: 0; height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+  }
+  #app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  #menuLateral {
+    width: 300px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  #menuLateral h2 {
+    margin: 5px 0 10px 0;
+    font-size: 20px;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 8px;
+  }
+  .abaMenu {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+  }
+  .abaMenu button {
+    background: #34495e;
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    flex-grow: 1;
+    margin: 0 4px;
+    transition: background 0.3s;
+  }
+  .abaMenu button.ativo {
+    background: #1abc9c;
+  }
+  #listaGrupos, #listaUsuarios {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  .itemLista {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: #34495e;
+    transition: background 0.3s;
+  }
+  .itemLista:hover, .itemLista.selecionado {
+    background: #1abc9c;
+  }
+
+  #areaChat {
+    flex-grow: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  #headerChat {
+    background: #1abc9c;
+    color: white;
+    padding: 15px;
+    font-size: 18px;
+    border-bottom: 2px solid #16a085;
+  }
+  #mensagens {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+  .mensagem {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .mensagem .fotoUsuario {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  .mensagem .conteudo {
+    background: #ecf0f1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 70%;
+    word-break: break-word;
+  }
+  .mensagem .nome {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  #inputArea {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+  #inputMsg {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+  #btnEnviar {
+    margin-left: 10px;
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 0 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+  #btnEnviar:hover {
+    background: #16a085;
+  }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+</head>
+<body>
+
+<div id="app">
+  <div id="menuLateral">
+    <div class="abaMenu">
+      <button id="btnAbaGrupos" class="ativo">Grupos</button>
+      <button id="btnAbaUsuarios">Usuários</button>
+    </div>
+
+    <div id="listaGrupos"></div>
+    <div id="listaUsuarios" style="display:none"></div>
+  </div>
+
+  <div id="areaChat">
+    <div id="headerChat">Selecione um grupo ou usuário para conversar</div>
+    <div id="mensagens"></div>
+    <div id="inputArea">
+      <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." disabled />
+      <button id="btnEnviar" disabled>Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Config Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Usuário simulado logado
+  const usuarioAtual = {
+    uid: 'user1',
+    nome: 'Maninho',
+    fotoPerfil: 'https://i.pravatar.cc/150?img=5'
+  };
+
+  // Elementos DOM
+  const btnAbaGrupos = document.getElementById('btnAbaGrupos');
+  const btnAbaUsuarios = document.getElementById('btnAbaUsuarios');
+  const listaGrupos = document.getElementById('listaGrupos');
+  const listaUsuarios = document.getElementById('listaUsuarios');
+  const headerChat = document.getElementById('headerChat');
+  const mensagensDiv = document.getElementById('mensagens');
+  const inputMsg = document.getElementById('inputMsg');
+  const btnEnviar = document.getElementById('btnEnviar');
+
+  let abaAtual = 'grupos'; // grupos ou usuarios
+  let grupoSelecionado = null;
+  let usuarioSelecionado = null;
+  let mensagensListener = null;
+  let gruposDados = {};
+  let usuariosDados = {};
+
+  // Trocar abas
+  btnAbaGrupos.onclick = () => {
+    abaAtual = 'grupos';
+    btnAbaGrupos.classList.add('ativo');
+    btnAbaUsuarios.classList.remove('ativo');
+    listaGrupos.style.display = 'block';
+    listaUsuarios.style.display = 'none';
+    limparChat();
+    carregarGrupos();
+  };
+  btnAbaUsuarios.onclick = () => {
+    abaAtual = 'usuarios';
+    btnAbaUsuarios.classList.add('ativo');
+    btnAbaGrupos.classList.remove('ativo');
+    listaUsuarios.style.display = 'block';
+    listaGrupos.style.display = 'none';
+    limparChat();
+    carregarUsuarios();
+  };
+
+  // Limpar chat e área de input
+  function limparChat() {
+    grupoSelecionado = null;
+    usuarioSelecionado = null;
+    headerChat.textContent = 'Selecione um grupo ou usuário para conversar';
+    mensagensDiv.innerHTML = '';
+    inputMsg.value = '';
+    inputMsg.disabled = true;
+    btnEnviar.disabled = true;
+  }
+
+  // Carregar grupos
+  function carregarGrupos() {
+    listaGrupos.innerHTML = 'Carregando grupos...';
+    const gruposRef = db.ref('grupos');
+    gruposRef.on('value', snapshot => {
+      gruposDados = snapshot.val() || {};
+      listaGrupos.innerHTML = '';
+      for (const grupoId in gruposDados) {
+        const grupo = gruposDados[grupoId];
+        const div = document.createElement('div');
+        div.className = 'itemLista';
+        div.textContent = grupo.nome || grupoId;
+        div.onclick = () => selecionarGrupo(grupoId);
+        if (grupoSelecionado === grupoId) {
+          div.classList.add('selecionado');
+        }
+        listaGrupos.appendChild(div);
+      }
+    });
+  }
+
+  // Carregar usuários (exceto usuário atual)
+  function carregarUsuarios() {
+    listaUsuarios.innerHTML = 'Carregando usuários...';
+    const usuariosRef = db.ref('usuarios');
+    usuariosRef.on('value', snapshot => {
+      usuariosDados = snapshot.val() || {};
+      listaUsuarios.innerHTML = '';
+      for (const uid in usuariosDados) {
+        if (uid === usuarioAtual.uid) continue;
+        const user = usuariosDados[uid];
+        const div = document.createElement('div');
+        div.className = 'itemLista';
+        div.textContent = user.nome || uid;
+        div.onclick = () => selecionarUsuario(uid);
+        listaUsuarios.appendChild(div);
+      }
+    });
+  }
+
+  // Selecionar grupo
+  function selecionarGrupo(grupoId) {
+    grupoSelecionado = grupoId;
+    usuarioSelecionado = null;
+    headerChat.textContent = gruposDados[grupoId].nome || grupoId;
+
+    marcarSelecionado(listaGrupos, grupoId);
+
+    inputMsg.disabled = false;
+    btnEnviar.disabled = false;
+    inputMsg.value = '';
+    inputMsg.focus();
+
+    carregarMensagensGrupo(grupoId);
+  }
+
+  // Selecionar usuário para chat privado
+  function selecionarUsuario(uid) {
+    usuarioSelecionado = uid;
+    grupoSelecionado = null;
+    const user = usuariosDados[uid];
+    headerChat.textContent = `Chat privado com ${user.nome || uid}`;
+
+    marcarSelecionado(listaUsuarios, uid);
+
+    inputMsg.disabled = false;
+    btnEnviar.disabled = false;
+    inputMsg.value = '';
+    inputMsg.focus();
+
+    carregarMensagensPrivadas(uid);
+  }
+
+  // Marca item selecionado na lista
+  function marcarSelecionado(lista, id) {
+    Array.from(lista.children).forEach(div => {
+      div.classList.toggle('selecionado', div.textContent === headerChat.textContent || div.dataset.id === id);
+    });
+  }
+
+  // Helper para gerar id único para chat privado (ordem alfabética dos UIDs)
+  function gerarIdChatPrivado(uid1, uid2) {
+    return [uid1, uid2].sort().join('_');
+  }
+
+  // Carregar mensagens grupo
+  function carregarMensagensGrupo(grupoId) {
+    if (mensagensListener) {
+      mensagensListener.off();
+    }
+    mensagensDiv.innerHTML = 'Carregando mensagens...';
+
+    const ref = db.ref('mensagens/' + grupoId);
+    mensagensListener = ref;
+    ref.off();
+    ref.on('value', async snapshot => {
+      const msgs = snapshot.val() || {};
+      mensagensDiv.innerHTML = '';
+      for (const key in msgs) {
+        const msg = msgs[key];
+        const user = usuariosDados[msg.uid] || {};
+        adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto);
+      }
+      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+    });
+  }
+
+  // Carregar mensagens privadas
+  function carregarMensagensPrivadas(uidOutro) {
+    if (mensagensListener) {
+      mensagensListener.off();
+    }
+    mensagensDiv.innerHTML = 'Carregando mensagens privadas...';
+
+    const chatId = gerarIdChatPrivado(usuarioAtual.uid, uidOutro);
+    const ref = db.ref('chatPrivado/' + chatId);
+    mensagensListener = ref;
+    ref.off();
+    ref.on('value', async snapshot => {
+      const msgs = snapshot.val() || {};
+      mensagensDiv.innerHTML = '';
+      for (const key in msgs) {
+        const msg = msgs[key];
+        const user = usuariosDados[msg.uid] || {};
+        adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto);
+      }
+      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+    });
+  }
+
+  // Adiciona mensagem na tela
+  function adicionarMensagemNaTela(nome, foto, texto) {
+    const div = document.createElement('div');
+    div.className = 'mensagem';
+
+    div.innerHTML = `
+      <img src="${foto}" alt="${nome}" class="fotoUsuario" />
+      <div class="conteudo">
+        <div class="nome">${nome}</div>
+        <div class="texto">${texto}</div>
+      </div>
+    `;
+    mensagensDiv.appendChild(div);
+  }
+
+  // Enviar mensagem (grupo ou privada)
+  btnEnviar.onclick = () => {
+    const texto = inputMsg.value.trim();
+    if (!texto) return;
+
+    let ref;
+    if (grupoSelecionado) {
+      ref = db.ref('mensagens/' + grupoSelecionado);
+    } else if (usuarioSelecionado) {
+      const chatId = gerarIdChatPrivado(usuarioAtual.uid, usuarioSelecionado);
+      ref = db.ref('chatPrivado/' + chatId);
+    } else {
+      return;
+    }
+
+    const msg = {
+      uid: usuarioAtual.uid,
+      texto,
+      timestamp: Date.now()
+    };
+
+    ref.push(msg).then(() => {
+      inputMsg.value = '';
+      inputMsg.focus();
+    });
+  };
+
+  // Inicializa com aba grupos carregada
+  btnAbaGrupos.click();
+
+</script>
+
+</body>
+</html>
