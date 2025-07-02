@@ -3,125 +3,115 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat Fullscreen com Grupos e Pesquisa</title>
+<title>Chat com Login Firebase + Admin</title>
 
 <style>
-  body, html {
-    margin:0; padding:0;
-    height:100%;
+  body {
     font-family: Arial, sans-serif;
+    margin:0; padding:0;
     background:#f4f7f9;
-    overflow: hidden; /* Evita scroll da página */
+    overflow-x: hidden;
   }
-
-  #btnOpenChat {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #1abc9c;
-    color: white;
-    border:none;
-    padding: 15px 20px;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    z-index: 1001;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  }
-  #btnOpenChat:hover {
-    background: #16a085;
-  }
-
-  /* Dialogo fullscreen */
-  #chatDialog {
-    position: fixed;
-    top:0; left:0; right:0; bottom:0;
+  #loginSection {
+    max-width: 400px;
+    margin: 50px auto;
     background: white;
-    box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    display: none;
-    flex-direction: row;
-    z-index: 1000;
-    height: 100vh;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
+    padding: 20px;
+    text-align: center;
+  }
+  button {
+    background:#1abc9c;
+    border:none;
+    color:white;
+    padding:10px 18px;
+    border-radius:5px;
+    cursor:pointer;
+    font-weight:bold;
+    margin-top:10px;
+  }
+  button:hover {background:#16a085;}
+  #btnLogout {
+    background: #e74c3c;
+  }
+  #userInfo {
+    margin-top:15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #userInfo img {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+  }
+
+  /* DIALOG - CHAT */
+  dialog#chatDialog {
     width: 100vw;
-  }
-
-  /* Sidebar grupos */
-  #sidebar {
-    width: 280px;
-    border-right: 1px solid #ddd;
+    height: 100vh;
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    top: 0; left: 0;
+    background: white;
     display: flex;
     flex-direction: column;
-    background: #f7f9fa;
+    overflow: hidden;
   }
-
-  #searchGrupos {
-    padding: 10px;
-    border: none;
-    border-bottom: 1px solid #ccc;
-    font-size: 1rem;
+  dialog#chatDialog::backdrop {
+    background: rgba(0,0,0,0.6);
   }
-
-  #listaGrupos {
-    flex-grow: 1;
-    overflow-y: auto;
+  dialog#chatDialog:focus-visible {
+    outline: none !important;
   }
-  #listaGrupos button {
-    width: 100%;
-    text-align: left;
-    padding: 12px 16px;
-    border: none;
-    background: transparent;
-    border-bottom: 1px solid #ddd;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  #listaGrupos button:hover, #listaGrupos button.active {
+  #chatHeader {
     background: #1abc9c;
     color: white;
-  }
-
-  /* Área do chat */
-  #chatArea {
-    flex-grow: 1;
+    padding: 12px 20px;
     display: flex;
-    flex-direction: column;
-    height: 100%;
+    align-items: center;
+    justify-content: space-between;
   }
-
-  #headerChat {
-    padding: 15px 20px;
-    background: #1abc9c;
-    color: white;
+  #nomeGrupoSelecionado {
     font-weight: bold;
     font-size: 1.2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  }
+  #chatHeader label {
+    cursor: pointer;
+    background: #16a085;
+    padding: 6px 10px;
+    border-radius: 5px;
+    user-select: none;
+    transition: background 0.3s;
+    font-size: 0.9rem;
+  }
+  #chatHeader label:hover {
+    background: #138d75;
+  }
+  #chatHeader input[type="file"] {
+    display: none;
   }
   #btnCloseChat {
     background: transparent;
     border: none;
+    font-size: 1.4rem;
+    font-weight: bold;
     color: white;
-    font-size: 1.5rem;
     cursor: pointer;
+    margin-left: 15px;
   }
-
-  #searchMsgs {
-    padding: 10px;
-    border: none;
-    border-bottom: 1px solid #ccc;
-    font-size: 1rem;
-  }
-
   #chatMessages {
-    flex-grow: 1;
-    padding: 15px;
+    flex: 1;
     overflow-y: auto;
+    padding: 20px;
     background: #fefefe;
   }
-
   .msg {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
   }
@@ -129,95 +119,102 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 10px;
     object-fit: cover;
+    flex-shrink: 0;
   }
   .msg .msgContent {
     background: #1abc9c;
     color: white;
-    padding: 8px 12px;
-    border-radius: 12px;
-    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 15px;
+    max-width: 70%;
     word-wrap: break-word;
   }
   .msg.me .msgContent {
     background: #16a085;
+    margin-left: auto;
   }
 
-  #inputMsgContainer {
-    padding: 10px 15px;
-    border-top: 1px solid #ddd;
+  #inputContainer {
     display: flex;
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    background: #fafafa;
   }
-
   #inputMsg {
-    flex-grow: 1;
+    flex: 1;
     padding: 10px;
     font-size: 1rem;
-    border-radius: 20px;
+    border-radius: 6px;
     border: 1px solid #ccc;
     margin-right: 10px;
   }
-
   #btnSendMsg {
-    background: #1abc9c;
-    border: none;
-    color: white;
-    padding: 0 20px;
-    border-radius: 20px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  #btnSendMsg:hover {
-    background: #16a085;
+    width: 80px;
   }
 
-  /* Scrollbar personalizado */
-  #listaGrupos::-webkit-scrollbar, #chatMessages::-webkit-scrollbar {
-    width: 8px;
+  /* Pesquisa no chat */
+  #searchContainer {
+    padding: 10px 20px;
+    background: #eee;
+    border-bottom: 1px solid #ccc;
   }
-  #listaGrupos::-webkit-scrollbar-thumb, #chatMessages::-webkit-scrollbar-thumb {
-    background: #1abc9c;
-    border-radius: 4px;
+  #inputSearch {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
   }
+
 </style>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
 
-<button id="btnOpenChat" title="Abrir Chat">💬 Chat</button>
+<!-- Login -->
+<section id="loginSection">
+  <h1>Entrar no Chat</h1>
+  <button id="btnLoginGoogle">Entrar com Google</button>
+  <button id="btnLogout" style="display:none;">Sair</button>
 
-<div id="chatDialog" role="dialog" aria-modal="true" aria-labelledby="headerChatTitle">
-  <div id="sidebar">
-    <input type="text" id="searchGrupos" placeholder="Buscar grupos..." autocomplete="off" />
-    <div id="listaGrupos">
-      <!-- grupos aparecerão aqui -->
-    </div>
+  <div id="userInfo" style="display:none;">
+    <img id="userFoto" alt="Foto do usuário" />
+    <span id="userNome"></span>
+  </div>
+</section>
+
+<!-- Diálogo do Chat -->
+<dialog id="chatDialog">
+
+  <div id="chatHeader">
+    <span id="nomeGrupoSelecionado">Chat Geral</span>
+    <label for="inputFotoPerfil">Trocar foto</label>
+    <input type="file" id="inputFotoPerfil" accept="image/*" />
+    <button id="btnCloseChat" aria-label="Fechar chat">✖</button>
   </div>
 
-  <div id="chatArea">
-    <div id="headerChat">
-      <span id="headerChatTitle">Selecione um grupo</span>
-      <button id="btnCloseChat" aria-label="Fechar chat">&times;</button>
-    </div>
-    <input type="text" id="searchMsgs" placeholder="Buscar mensagens..." autocomplete="off" disabled />
-    <div id="chatMessages">
-      <!-- mensagens aqui -->
-    </div>
-    <div id="inputMsgContainer">
-      <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." autocomplete="off" disabled />
-      <button id="btnSendMsg" disabled>Enviar</button>
-    </div>
+  <div id="searchContainer">
+    <input type="text" id="inputSearch" placeholder="Pesquisar mensagens..." />
   </div>
-</div>
+
+  <div id="chatMessages"></div>
+
+  <div id="inputContainer">
+    <input id="inputMsg" type="text" placeholder="Digite sua mensagem..." autocomplete="off"/>
+    <button id="btnSendMsg">Enviar</button>
+  </div>
+</dialog>
 
 <script>
-  // Config Firebase (substitua com a sua config se quiser)
+  // Config Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -227,194 +224,184 @@
     messagingSenderId: "790408726854",
     appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
   };
+
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
+  const storage = firebase.storage();
 
   // Elementos
-  const btnOpenChat = document.getElementById('btnOpenChat');
+  const btnLoginGoogle = document.getElementById('btnLoginGoogle');
+  const btnLogout = document.getElementById('btnLogout');
+  const userInfo = document.getElementById('userInfo');
+  const userFoto = document.getElementById('userFoto');
+  const userNome = document.getElementById('userNome');
+
+  const loginSection = document.getElementById('loginSection');
   const chatDialog = document.getElementById('chatDialog');
-  const btnCloseChat = document.getElementById('btnCloseChat');
-
-  const searchGrupos = document.getElementById('searchGrupos');
-  const listaGrupos = document.getElementById('listaGrupos');
-
-  const headerChatTitle = document.getElementById('headerChatTitle');
-  const searchMsgs = document.getElementById('searchMsgs');
   const chatMessages = document.getElementById('chatMessages');
   const inputMsg = document.getElementById('inputMsg');
   const btnSendMsg = document.getElementById('btnSendMsg');
+  const inputFotoPerfil = document.getElementById('inputFotoPerfil');
+  const btnCloseChat = document.getElementById('btnCloseChat');
+  const inputSearch = document.getElementById('inputSearch');
 
-  let gruposData = {};
-  let mensagensData = {};
-  let grupoSelecionadoId = null;
+  let mensagensCache = {}; // Guarda mensagens para pesquisa
 
-  // Abrir/fechar chat
-  btnOpenChat.onclick = () => {
-    chatDialog.style.display = 'flex';
+  // Login Google
+  btnLoginGoogle.onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(e => alert('Erro no login: '+e.message));
   };
+
+  btnLogout.onclick = () => {
+    auth.signOut();
+  };
+
   btnCloseChat.onclick = () => {
-    chatDialog.style.display = 'none';
-    limparChat();
+    chatDialog.close();
+    inputSearch.value = '';
+    inputMsg.value = '';
+    chatMessages.innerHTML = '';
   };
 
-  // Carregar grupos
-  function carregarGrupos() {
-    db.ref('grupos').on('value', snapshot => {
-      gruposData = snapshot.val() || {};
-      mostrarGrupos();
-    });
-  }
+  // Ao mudar usuário logado
+  auth.onAuthStateChanged(user => {
+    if(user){
+      loginSection.style.display = 'none';
+      btnLogout.style.display = 'inline-block';
+      userInfo.style.display = 'flex';
 
-  function mostrarGrupos(filtro = '') {
-    const filtroLower = filtro.toLowerCase();
-    listaGrupos.innerHTML = '';
-    const ids = Object.keys(gruposData);
-    const filtrados = ids.filter(id => gruposData[id].nome.toLowerCase().includes(filtroLower));
-    if (filtrados.length === 0) {
-      listaGrupos.innerHTML = '<p style="padding:10px;color:#666;">Nenhum grupo encontrado.</p>';
-      return;
+      userFoto.src = user.photoURL || 'https://via.placeholder.com/70';
+      userNome.textContent = user.displayName || user.email || 'Usuário';
+
+      // Cria no DB se não existir
+      db.ref('usuarios/' + user.uid).once('value').then(snap => {
+        if(!snap.exists()){
+          db.ref('usuarios/' + user.uid).set({
+            nome: user.displayName || '',
+            email: user.email || '',
+            fotoPerfil: user.photoURL || '',
+            banido: false
+          });
+        }
+      });
+
+      // Abre o chat automaticamente
+      if (!chatDialog.open) {
+        chatDialog.showModal();
+      }
+      carregarMensagens();
+    } else {
+      loginSection.style.display = 'block';
+      btnLogout.style.display = 'none';
+      userInfo.style.display = 'none';
+      if (chatDialog.open) chatDialog.close();
     }
-    filtrados.forEach(id => {
-      const btn = document.createElement('button');
-      btn.textContent = gruposData[id].nome;
-      btn.dataset.id = id;
-      if (id === grupoSelecionadoId) btn.classList.add('active');
-      btn.onclick = () => selecionarGrupo(id);
-      listaGrupos.appendChild(btn);
-    });
-  }
-
-  searchGrupos.addEventListener('input', () => {
-    mostrarGrupos(searchGrupos.value);
-  });
-
-  // Selecionar grupo
-  function selecionarGrupo(id) {
-    grupoSelecionadoId = id;
-    headerChatTitle.textContent = gruposData[id].nome;
-    searchMsgs.disabled = false;
-    inputMsg.disabled = false;
-    btnSendMsg.disabled = false;
-    mostrarGrupos(searchGrupos.value);
-
-    carregarMensagensGrupo(id);
-  }
-
-  // Carregar mensagens do grupo
-  function carregarMensagensGrupo(grupoId) {
-    if (!grupoId) return;
-
-    // Limpar listener antigo se houver
-    if (window.mensagensListener) {
-      db.ref('mensagens').off('value', window.mensagensListener);
-    }
-
-    window.mensagensListener = db.ref('mensagens').orderByChild('grupoId').equalTo(grupoId).limitToLast(100).on('value', snapshot => {
-      mensagensData = snapshot.val() || {};
-      mostrarMensagens(searchMsgs.value);
-    });
-  }
-
-  // Mostrar mensagens com filtro opcional
-  function mostrarMensagens(filtro = '') {
-    const filtroLower = filtro.toLowerCase();
-    chatMessages.innerHTML = '';
-
-    const mensagensArray = Object.entries(mensagensData)
-      .map(([key, val]) => ({ id: key, ...val }))
-      .filter(m => m.texto.toLowerCase().includes(filtroLower))
-      .sort((a,b) => a.timestamp - b.timestamp);
-
-    if (mensagensArray.length === 0) {
-      chatMessages.innerHTML = '<p style="color:#666;text-align:center;margin-top:20px;">Nenhuma mensagem encontrada.</p>';
-      return;
-    }
-
-    mensagensArray.forEach(m => {
-      const div = document.createElement('div');
-      div.classList.add('msg');
-      if (auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
-
-      div.innerHTML = `
-        <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" />
-        <div class="msgContent">${escapeHtml(m.texto)}</div>
-      `;
-      chatMessages.appendChild(div);
-    });
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  searchMsgs.addEventListener('input', () => {
-    mostrarMensagens(searchMsgs.value);
   });
 
   // Enviar mensagem
-  btnSendMsg.onclick = () => enviarMensagem();
+  btnSendMsg.onclick = enviarMensagem;
   inputMsg.addEventListener('keydown', e => {
     if(e.key === 'Enter') enviarMensagem();
   });
 
-  function enviarMensagem() {
+  function enviarMensagem(){
     const texto = inputMsg.value.trim();
-    if (!texto || !grupoSelecionadoId) return;
+    if(texto === '') return;
 
     const user = auth.currentUser;
-    if (!user) {
-      alert('Faça login para enviar mensagens');
-      return;
-    }
+    if(!user) return alert('Faça login para enviar mensagens');
 
-    // Verifica se banido
     db.ref('usuarios/' + user.uid).once('value').then(snap => {
-      if (snap.exists() && snap.val().banido) {
+      if(snap.exists() && snap.val().banido){
         alert('Você está banido e não pode enviar mensagens.');
         return;
       }
 
-      const novaMsgRef = db.ref('mensagens').push();
-      novaMsgRef.set({
+      // Salva mensagem no grupo geral
+      const msgRef = db.ref('mensagens').push();
+      msgRef.set({
         uid: user.uid,
         nome: user.displayName || '',
         fotoPerfil: user.photoURL || '',
         texto: texto,
-        timestamp: Date.now(),
-        grupoId: grupoSelecionadoId
+        timestamp: Date.now()
       });
-
       inputMsg.value = '';
     });
   }
 
+  // Carregar mensagens e atualizar display
+  function carregarMensagens(){
+    db.ref('mensagens').limitToLast(200).on('value', snapshot => {
+      const msgs = snapshot.val() || {};
+      mensagensCache = msgs;
+      renderizarMensagens(msgs);
+    });
+  }
+
+  // Renderizar mensagens (filtra por pesquisa se existir)
+  function renderizarMensagens(mensagens){
+    const filtro = inputSearch.value.toLowerCase().trim();
+    chatMessages.innerHTML = '';
+    for(const key in mensagens){
+      const m = mensagens[key];
+      if(filtro && !m.texto.toLowerCase().includes(filtro)) continue;
+
+      const div = document.createElement('div');
+      div.classList.add('msg');
+      if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
+
+      div.innerHTML = `
+        <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" alt="Foto de perfil" />
+        <div class="msgContent">${escapeHtml(m.texto)}</div>
+      `;
+      chatMessages.appendChild(div);
+    }
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Pesquisa mensagens em tempo real
+  inputSearch.addEventListener('input', () => {
+    renderizarMensagens(mensagensCache);
+  });
+
+  // Escape HTML para segurança básica
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.innerText = text;
     return div.innerHTML;
   }
 
-  function limparChat() {
-    grupoSelecionadoId = null;
-    headerChatTitle.textContent = 'Selecione um grupo';
-    chatMessages.innerHTML = '';
-    searchMsgs.value = '';
-    inputMsg.value = '';
-    searchMsgs.disabled = true;
-    inputMsg.disabled = true;
-    btnSendMsg.disabled = true;
-    mostrarGrupos();
-    if (window.mensagensListener) {
-      db.ref('mensagens').off('value', window.mensagensListener);
-      window.mensagensListener = null;
-    }
-  }
+  // Upload foto perfil pelo chat
+  inputFotoPerfil.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Você pode colocar sua lógica de login aqui. Por enquanto, só iniciar os grupos
-  auth.onAuthStateChanged(user => {
-    if(user){
-      carregarGrupos();
-    } else {
-      limparChat();
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Você precisa estar logado para trocar foto.');
+        return;
+      }
+
+      const storageRef = storage.ref(`usuariosFotos/${user.uid}_${Date.now()}.jpg`);
+      const snapshot = await storageRef.put(file);
+      const urlFoto = await snapshot.ref.getDownloadURL();
+
+      // Atualiza DB e foto do usuário no chat e login
+      await db.ref(`usuarios/${user.uid}`).update({ fotoPerfil: urlFoto });
+      userFoto.src = urlFoto;
+
+      // Atualiza foto no perfil do Firebase Auth para sincronizar em mensagens futuras
+      await user.updateProfile({ photoURL: urlFoto });
+
+      alert('Foto atualizada com sucesso!');
+    } catch (err) {
+      alert('Erro ao enviar foto: ' + err.message);
     }
+    e.target.value = '';
   });
 
 </script>
