@@ -3,553 +3,601 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat Grupos + Privado Firebase com Registro e Pesquisa</title>
+<title>Chat com Login Firebase + Admin</title>
 
 <style>
-  html, body {
-    margin: 0; height: 100%;
+  body {
     font-family: Arial, sans-serif;
-    background: #f0f0f0;
+    margin:0; padding:0;
+    background:#f4f7f9;
   }
-  #app {
-    display: flex;
-    height: 100vh;
-    width: 100vw;
-  }
-  #menuLateral {
-    width: 300px;
-    background: #2c3e50;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-    box-sizing: border-box;
-  }
-  .abaMenu {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 10px;
-  }
-  .abaMenu button {
-    background: #34495e;
-    border: none;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    flex-grow: 1;
-    margin: 0 4px;
-    transition: background 0.3s;
-  }
-  .abaMenu button.ativo {
-    background: #1abc9c;
-  }
-  #inputPesquisa {
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 6px;
-    border: none;
-    font-size: 16px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  #listaGrupos, #listaUsuarios {
-    flex-grow: 1;
-    overflow-y: auto;
-  }
-  .itemLista {
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    background: #34495e;
-    display: flex;
-    align-items: center;
-    transition: background 0.3s;
-  }
-  .itemLista:hover, .itemLista.selecionado {
-    background: #1abc9c;
-  }
-  .itemLista img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-    object-fit: cover;
-  }
-
-  #areaChat {
-    flex-grow: 1;
+  #loginSection, #chatSection, #adminSection {
+    max-width: 900px;
+    margin: 20px auto;
     background: white;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
+    padding: 20px;
   }
-  #headerChat {
-    background: #1abc9c;
-    color: white;
-    padding: 15px;
-    font-size: 18px;
-    border-bottom: 2px solid #16a085;
+  #loginSection {text-align:center;}
+  button {
+    background:#1abc9c;
+    border:none;
+    color:white;
+    padding:10px 18px;
+    border-radius:5px;
+    cursor:pointer;
+    font-weight:bold;
+    margin-top:10px;
   }
-  #mensagens {
-    flex-grow: 1;
+  button:hover {background:#16a085;}
+  #userInfo {
+    margin-top:15px;
+  }
+  #userInfo img {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+  #chatMessages {
+    height: 400px;
+    border: 1px solid #ddd;
     overflow-y: auto;
-    padding: 15px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+    padding: 10px;
+    background: #fefefe;
+    margin-bottom: 10px;
+    border-radius: 6px;
   }
-  .mensagem {
+  .msg {
     margin-bottom: 12px;
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    max-width: 70%;
-    word-break: break-word;
+    align-items: center;
   }
-  .mensagem.minha {
-    margin-left: auto;
-    flex-direction: row-reverse;
+  .msg .fotoUser {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
   }
-  .mensagem.minha .conteudo {
+  .msg .msgContent {
+    background: #1abc9c;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 75%;
+    word-wrap: break-word;
+  }
+  .msg.me .msgContent {
+    background: #16a085;
+  }
+  #inputMsg {
+    width: calc(100% - 100px);
+    padding: 8px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  #btnSendMsg {
+    width: 80px;
+  }
+  #btnLogout {
+    background: #e74c3c;
+    margin-left: 10px;
+  }
+  /* Admin Collapsible */
+  #adminToggle {
+    background:#2980b9;
+    margin:20px auto;
+    display:block;
+    color:white;
+    font-weight:bold;
+    border-radius:5px;
+    padding:10px 0;
+    width: 150px;
+    cursor:pointer;
+  }
+  #adminSection {
+    display:none;
+  }
+  /* Admin table style */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border:1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
     background: #1abc9c;
     color: white;
   }
-  .mensagem .fotoUsuario {
+  input[type="text"], input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+  }
+  .fotoUserAdmin {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  }
-  .mensagem .conteudo {
-    background: #ecf0f1;
-    border-radius: 10px;
-    padding: 8px 12px;
-    max-width: 70%;
-  }
-  .mensagem .nome {
-    font-weight: bold;
-    margin-bottom: 4px;
-    font-size: 14px;
-  }
-  #inputArea {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid #ddd;
-  }
-  #inputMsg {
-    flex-grow: 1;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-    outline: none;
-  }
-  #btnEnviar {
-    margin-left: 10px;
-    background: #1abc9c;
-    border: none;
-    color: white;
-    padding: 0 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-  }
-  #btnEnviar:hover {
-    background: #16a085;
-  }
-
-  /* Tela cadastro */
-  #telaCadastro {
-    position: fixed;
-    top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  #telaCadastro .box {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 300px;
-    box-sizing: border-box;
-    text-align: center;
-  }
-  #telaCadastro input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-  #telaCadastro button {
-    background: #1abc9c;
-    border: none;
-    color: white;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background 0.3s;
-    width: 100%;
-    font-size: 16px;
-  }
-  #telaCadastro button:hover {
-    background: #16a085;
-  }
-  #telaCadastro h2 {
-    margin-bottom: 15px;
   }
 </style>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
 
-<!-- Tela cadastro -->
-<div id="telaCadastro">
-  <div class="box">
-    <h2>Crie sua conta</h2>
-    <input type="text" id="nomeCadastro" placeholder="Seu nome" />
-    <input type="url" id="fotoCadastro" placeholder="URL da sua foto de perfil" />
-    <button id="btnCriarConta">Criar Conta</button>
-  </div>
-</div>
+<!-- Login -->
+<section id="loginSection">
+  <h1>Entrar no Chat</h1>
+  <button id="btnLoginGoogle">Entrar com Google</button>
+  <button id="btnLogout" style="display:none;">Sair</button>
 
-<div id="app" style="display:none;">
-  <div id="menuLateral">
-    <div class="abaMenu">
-      <button id="btnAbaGrupos" class="ativo">Grupos</button>
-      <button id="btnAbaUsuarios">Usuários</button>
-    </div>
-    <input type="text" id="inputPesquisa" placeholder="Pesquisar..." />
-    <div id="listaGrupos"></div>
-    <div id="listaUsuarios" style="display:none"></div>
+  <div id="userInfo" style="display:none;">
+    <img id="userFoto" alt="Foto do usuário"/>
+    <span id="userNome"></span>
   </div>
+</section>
 
-  <div id="areaChat">
-    <div id="headerChat">Selecione um grupo ou usuário para conversar</div>
-    <div id="mensagens"></div>
-    <div id="inputArea">
-      <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." disabled />
-      <button id="btnEnviar" disabled>Enviar</button>
-    </div>
-  </div>
-</div>
+<!-- Chat -->
+<section id="chatSection" style="display:none;">
+  <h2>Chat</h2>
+  <div id="chatMessages"></div>
+  <input id="inputMsg" type="text" placeholder="Digite sua mensagem..." />
+  <button id="btnSendMsg">Enviar</button>
+</section>
+
+<!-- Botão para mostrar/ocultar admin -->
+<button id="adminToggle">Mostrar Admin</button>
+
+<!-- Admin -->
+<section id="adminSection">
+
+  <h2>Painel Admin</h2>
+
+  <section id="usuariosSection">
+    <h3>Usuários</h3>
+    <table id="tabelaUsuarios">
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>UID</th>
+          <th>Nome</th>
+          <th>Banir/Desbanir</th>
+          <th>Alterar Foto URL</th>
+          <th>Alterar Nome</th>
+          <th>Upload Nova Foto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="7">Carregando usuários...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="gruposSection">
+    <h3>Grupos</h3>
+    <table id="tabelaGrupos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome do Grupo</th>
+          <th>Alterar Nome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3">Carregando grupos...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="solicitacoesSection">
+    <h3>Solicitações de Novos Grupos</h3>
+    <table id="tabelaSolicitacoes">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome Solicitado</th>
+          <th>Solicitante (UID)</th>
+          <th>Aprovar</th>
+          <th>Rejeitar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5">Carregando solicitações...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</section>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
-  authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
-  databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
-  projectId: "projeto-deus-yato-928-sk",
-  storageBucket: "projeto-deus-yato-928-sk.appspot.com",
-  messagingSenderId: "790408726854",
-  appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let usuarioAtual = null; // Vai receber dados do usuário logado
-
-// Elementos DOM
-const telaCadastro = document.getElementById('telaCadastro');
-const btnCriarConta = document.getElementById('btnCriarConta');
-const nomeCadastro = document.getElementById('nomeCadastro');
-const fotoCadastro = document.getElementById('fotoCadastro');
-
-const app = document.getElementById('app');
-const btnAbaGrupos = document.getElementById('btnAbaGrupos');
-const btnAbaUsuarios = document.getElementById('btnAbaUsuarios');
-const listaGrupos = document.getElementById('listaGrupos');
-const listaUsuarios = document.getElementById('listaUsuarios');
-const headerChat = document.getElementById('headerChat');
-const mensagensDiv = document.getElementById('mensagens');
-const inputMsg = document.getElementById('inputMsg');
-const btnEnviar = document.getElementById('btnEnviar');
-const inputPesquisa = document.getElementById('inputPesquisa');
-
-let abaAtual = 'grupos';
-let grupoSelecionado = null;
-let usuarioSelecionado = null;
-let mensagensListener = null;
-let gruposDados = {};
-let usuariosDados = {};
-
-// Função para salvar usuário novo
-btnCriarConta.onclick = () => {
-  const nome = nomeCadastro.value.trim();
-  const foto = fotoCadastro.value.trim();
-
-  if (!nome) {
-    alert('Por favor, digite seu nome');
-    return;
-  }
-  if (!foto) {
-    alert('Por favor, coloque a URL da sua foto de perfil');
-    return;
-  }
-
-  // Gerar UID simples e único (pode melhorar depois)
-  const novoUid = 'user_' + Date.now();
-
-  const novoUsuario = {
-    nome,
-    fotoPerfil: foto,
+  // Config Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
   };
 
-  db.ref('usuarios/' + novoUid).set(novoUsuario).then(() => {
-    usuarioAtual = { uid: novoUid, ...novoUsuario };
-    telaCadastro.style.display = 'none';
-    app.style.display = 'flex';
-    inicializarApp();
-  }).catch(err => {
-    alert('Erro ao criar conta: ' + err.message);
-  });
-};
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+  const storage = firebase.storage();
 
-// Inicializa app após login
-function inicializarApp() {
-  carregarUsuarios();
-  carregarGrupos();
+  // Elementos
+  const btnLoginGoogle = document.getElementById('btnLoginGoogle');
+  const btnLogout = document.getElementById('btnLogout');
+  const userInfo = document.getElementById('userInfo');
+  const userFoto = document.getElementById('userFoto');
+  const userNome = document.getElementById('userNome');
 
-  btnAbaGrupos.onclick = () => {
-    abaAtual = 'grupos';
-    btnAbaGrupos.classList.add('ativo');
-    btnAbaUsuarios.classList.remove('ativo');
-    listaGrupos.style.display = 'block';
-    listaUsuarios.style.display = 'none';
-    limparChat();
-    carregarGrupos();
-    inputPesquisa.value = '';
-  };
-  btnAbaUsuarios.onclick = () => {
-    abaAtual = 'usuarios';
-    btnAbaUsuarios.classList.add('ativo');
-    btnAbaGrupos.classList.remove('ativo');
-    listaUsuarios.style.display = 'block';
-    listaGrupos.style.display = 'none';
-    limparChat();
-    carregarUsuarios();
-    inputPesquisa.value = '';
+  const loginSection = document.getElementById('loginSection');
+  const chatSection = document.getElementById('chatSection');
+
+  const chatMessages = document.getElementById('chatMessages');
+  const inputMsg = document.getElementById('inputMsg');
+  const btnSendMsg = document.getElementById('btnSendMsg');
+
+  const adminToggle = document.getElementById('adminToggle');
+  const adminSection = document.getElementById('adminSection');
+
+  // Login Google
+  btnLoginGoogle.onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(e => alert('Erro no login: '+e.message));
   };
 
-  inputPesquisa.oninput = () => {
-    if (abaAtual === 'grupos') {
-      filtrarLista(listaGrupos, inputPesquisa.value);
+  btnLogout.onclick = () => {
+    auth.signOut();
+  };
+
+  // Controla exibição admin
+  adminToggle.onclick = () => {
+    if(adminSection.style.display === 'none'){
+      adminSection.style.display = 'block';
+      adminToggle.textContent = 'Ocultar Admin';
     } else {
-      filtrarLista(listaUsuarios, inputPesquisa.value);
+      adminSection.style.display = 'none';
+      adminToggle.textContent = 'Mostrar Admin';
     }
   };
 
-  btnEnviar.onclick = () => {
+  // Ao mudar usuário logado
+  auth.onAuthStateChanged(user => {
+    if(user){
+      if(user.emailVerified === false) {
+        alert('Por favor, verifique seu email para continuar.');
+        auth.signOut();
+        return;
+      }
+
+      // Mostra dados
+      loginSection.style.display = 'none';
+      chatSection.style.display = 'block';
+      btnLogout.style.display = 'inline-block';
+      userInfo.style.display = 'inline-flex';
+
+      userFoto.src = user.photoURL || 'https://via.placeholder.com/70';
+      userNome.textContent = user.displayName || user.email || 'Usuário';
+
+      // Cria no DB se não existir
+      db.ref('usuarios/' + user.uid).once('value').then(snap => {
+        if(!snap.exists()){
+          db.ref('usuarios/' + user.uid).set({
+            nome: user.displayName || '',
+            email: user.email || '',
+            fotoPerfil: user.photoURL || '',
+            banido: false
+          });
+        }
+      });
+
+      // Carrega chat
+      carregarMensagens();
+
+      // Carrega admin só pra quem for admin (pode ajustar isso)
+      carregarUsuarios();
+      carregarGrupos();
+      carregarSolicitacoes();
+
+    } else {
+      loginSection.style.display = 'block';
+      chatSection.style.display = 'none';
+      btnLogout.style.display = 'none';
+      userInfo.style.display = 'none';
+      chatMessages.innerHTML = '';
+      tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Faça login para ver usuários</td></tr>';
+      tabelaGruposBody.innerHTML = '<tr><td colspan="3">Faça login para ver grupos</td></tr>';
+      tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Faça login para ver solicitações</td></tr>';
+    }
+  });
+
+  // Enviar mensagem
+  btnSendMsg.onclick = () => {
+    enviarMensagem();
+  };
+  inputMsg.addEventListener('keydown', e => {
+    if(e.key === 'Enter') enviarMensagem();
+  });
+
+  function enviarMensagem(){
     const texto = inputMsg.value.trim();
-    if (!texto) return;
+    if(texto === '') return;
 
-    let ref;
-    if (grupoSelecionado) {
-      ref = db.ref('mensagens/' + grupoSelecionado);
-    } else if (usuarioSelecionado) {
-      const chatId = gerarIdChatPrivado(usuarioAtual.uid, usuarioSelecionado);
-      ref = db.ref('chatPrivado/' + chatId);
-    } else {
-      return;
-    }
+    const user = auth.currentUser;
+    if(!user) return alert('Faça login para enviar mensagens');
 
-    const msg = {
-      uid: usuarioAtual.uid,
-      texto,
-      timestamp: Date.now()
-    };
+    // Verifica se banido
+    db.ref('usuarios/' + user.uid).once('value').then(snap => {
+      if(snap.exists() && snap.val().banido){
+        alert('Você está banido e não pode enviar mensagens.');
+        return;
+      }
 
-    ref.push(msg).then(() => {
+      // Salva mensagem
+      const msgRef = db.ref('mensagens').push();
+      msgRef.set({
+        uid: user.uid,
+        nome: user.displayName || '',
+        fotoPerfil: user.photoURL || '',
+        texto: texto,
+        timestamp: Date.now()
+      });
       inputMsg.value = '';
-      inputMsg.focus();
     });
-  };
-
-  // Já inicia na aba grupos
-  btnAbaGrupos.click();
-}
-
-function limparChat() {
-  grupoSelecionado = null;
-  usuarioSelecionado = null;
-  headerChat.textContent = 'Selecione um grupo ou usuário para conversar';
-  mensagensDiv.innerHTML = '';
-  inputMsg.value = '';
-  inputMsg.disabled = true;
-  btnEnviar.disabled = true;
-}
-
-function carregarGrupos() {
-  listaGrupos.innerHTML = 'Carregando grupos...';
-  const gruposRef = db.ref('grupos');
-  gruposRef.on('value', snapshot => {
-    gruposDados = snapshot.val() || {};
-    listaGrupos.innerHTML = '';
-    for (const grupoId in gruposDados) {
-      const grupo = gruposDados[grupoId];
-      const div = document.createElement('div');
-      div.className = 'itemLista';
-      div.dataset.id = grupoId;
-      div.innerHTML = `
-        <img src="${grupo.foto || 'https://via.placeholder.com/40'}" alt="foto grupo"/>
-        <span>${grupo.nome || grupoId}</span>
-      `;
-      div.onclick = () => selecionarGrupo(grupoId);
-      listaGrupos.appendChild(div);
-    }
-    filtrarLista(listaGrupos, inputPesquisa.value);
-  });
-}
-
-function carregarUsuarios() {
-  listaUsuarios.innerHTML = 'Carregando usuários...';
-  const usuariosRef = db.ref('usuarios');
-  usuariosRef.on('value', snapshot => {
-    usuariosDados = snapshot.val() || {};
-    listaUsuarios.innerHTML = '';
-    for (const uid in usuariosDados) {
-      if (uid === usuarioAtual.uid) continue;
-      const user = usuariosDados[uid];
-      const div = document.createElement('div');
-      div.className = 'itemLista';
-      div.dataset.id = uid;
-      div.innerHTML = `
-        <img src="${user.fotoPerfil || 'https://via.placeholder.com/40'}" alt="foto usuario" />
-        <span>${user.nome || uid}</span>
-      `;
-      div.onclick = () => selecionarUsuario(uid);
-      listaUsuarios.appendChild(div);
-    }
-    filtrarLista(listaUsuarios, inputPesquisa.value);
-  });
-}
-
-function selecionarGrupo(grupoId) {
-  grupoSelecionado = grupoId;
-  usuarioSelecionado = null;
-  headerChat.textContent = gruposDados[grupoId].nome || grupoId;
-
-  marcarSelecionado(listaGrupos, grupoId);
-
-  inputMsg.disabled = false;
-  btnEnviar.disabled = false;
-  inputMsg.value = '';
-  inputMsg.focus();
-
-  carregarMensagensGrupo(grupoId);
-}
-
-function selecionarUsuario(uid) {
-  usuarioSelecionado = uid;
-  grupoSelecionado = null;
-  const user = usuariosDados[uid];
-  headerChat.textContent = `Chat privado com ${user.nome || uid}`;
-
-  marcarSelecionado(listaUsuarios, uid);
-
-  inputMsg.disabled = false;
-  btnEnviar.disabled = false;
-  inputMsg.value = '';
-  inputMsg.focus();
-
-  carregarMensagensPrivadas(uid);
-}
-
-function marcarSelecionado(lista, id) {
-  Array.from(lista.children).forEach(div => {
-    div.classList.toggle('selecionado', div.dataset.id === id);
-  });
-}
-
-function gerarIdChatPrivado(uid1, uid2) {
-  return [uid1, uid2].sort().join('_');
-}
-
-function carregarMensagensGrupo(grupoId) {
-  if (mensagensListener) {
-    mensagensListener.off();
-  }
-  mensagensDiv.innerHTML = 'Carregando mensagens...';
-
-  const ref = db.ref('mensagens/' + grupoId);
-  mensagensListener = ref;
-
-  ref.on('value', snapshot => {
-    const msgs = snapshot.val() || {};
-    mensagensDiv.innerHTML = '';
-
-    for (const key in msgs) {
-      const msg = msgs[key];
-      const user = usuariosDados[msg.uid] || {};
-      adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
-    }
-    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
-  });
-}
-
-function carregarMensagensPrivadas(uidOutro) {
-  if (mensagensListener) {
-    mensagensListener.off();
-  }
-  mensagensDiv.innerHTML = 'Carregando mensagens privadas...';
-
-  const chatId = gerarIdChatPrivado(usuarioAtual.uid, uidOutro);
-  const ref = db.ref('chatPrivado/' + chatId);
-  mensagensListener = ref;
-
-  ref.on('value', snapshot => {
-    const msgs = snapshot.val() || {};
-    mensagensDiv.innerHTML = '';
-
-    for (const key in msgs) {
-      const msg = msgs[key];
-      const user = usuariosDados[msg.uid] || {};
-      adicionarMensagemNaTela(user.nome || 'Usuário', user.fotoPerfil || 'https://via.placeholder.com/40', msg.texto, msg.uid);
-    }
-    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
-  });
-}
-
-function adicionarMensagemNaTela(nome, foto, texto, uidMensagem) {
-  const div = document.createElement('div');
-  div.className = 'mensagem';
-  if (uidMensagem === usuarioAtual.uid) {
-    div.classList.add('minha');
   }
 
-  div.innerHTML = `
-    <img src="${foto}" alt="${nome}" class="fotoUsuario" />
-    <div class="conteudo">
-      <div class="nome">${nome}</div>
-      <div class="texto">${texto}</div>
-    </div>
-  `;
-  mensagensDiv.appendChild(div);
-}
+  // Mostrar mensagens
+  function carregarMensagens(){
+    db.ref('mensagens').limitToLast(50).on('value', snapshot => {
+      const msgs = snapshot.val() || {};
+      chatMessages.innerHTML = '';
+      for(const key in msgs){
+        const m = msgs[key];
+        const div = document.createElement('div');
+        div.classList.add('msg');
+        if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
 
-// Função para filtrar itens da lista (grupos ou usuários)
-function filtrarLista(lista, textoFiltro) {
-  textoFiltro = textoFiltro.toLowerCase();
-  Array.from(lista.children).forEach(div => {
-    const nome = div.textContent.toLowerCase();
-    div.style.display = nome.includes(textoFiltro) ? '' : 'none';
-  });
-}
+        div.innerHTML = `
+          <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" />
+          <div class="msgContent">${escapeHtml(m.texto)}</div>
+        `;
+        chatMessages.appendChild(div);
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  }
 
-// Inicialização
-// Checa se usuário já está salvo no localStorage
-const userSalvo = localStorage.getItem('usuarioAtual');
-if
+  // Escape HTML para segurança básica
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.innerText = text;
+    return div.innerHTML;
+  }
+
+  /* ------------------ Admin --------------------- */
+
+  const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
+  const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
+  const tabelaSolicitacoesBody = document.querySelector('#tabelaSolicitacoes tbody');
+
+  // Carrega usuários
+  function carregarUsuarios() {
+    db.ref('usuarios').on('value', snapshot => {
+      const users = snapshot.val() || {};
+      tabelaUsuariosBody.innerHTML = '';
+      if(Object.keys(users).length === 0){
+        tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Nenhum usuário encontrado.</td></tr>';
+        return;
+      }
+
+      for (const uid in users) {
+        const user = users[uid];
+        const banido = user.banido || false;
+
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td><img src="${user.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUserAdmin" /></td>
+          <td>${uid}</td>
+          <td><input type="text" value="${user.nome || ''}" data-uid="${uid}" class="nomeUsuarioInput" /></td>
+          <td><button data-uid="${uid}" class="btnBanir">${banido ? 'Desbanir' : 'Banir'}</button></td>
+          <td><input type="text" value="${user.fotoPerfil || ''}" data-uid="${uid}" class="fotoUsuarioInput" /></td>
+          <td><button data-uid="${uid}" class="btnAlterar">Alterar</button></td>
+          <td>
+            <input type="file" accept="image/*" data-uid="${uid}" class="uploadFotoInput" />
+            <button data-uid="${uid}" class="btnUploadFoto">Enviar Foto</button>
+          </td>
+        `;
+
+        tabelaUsuariosBody.appendChild(tr);
+      }
+
+      // Botões banir/desbanir
+      document.querySelectorAll('.btnBanir').forEach(btn => {
+        btn.onclick = e => {
+          const uid = e.target.dataset.uid;
+          const userRef = db.ref('usuarios/' + uid);
+          userRef.once('value').then(snap => {
+            const data = snap.val() || {};
+            const novoStatus = !(data.banido || false);
+            userRef.update({ banido: novoStatus });
+          });
+        };
+      });
+
+      // Botão alterar nome e foto via input
+      document.querySelectorAll('.btnAlterar').forEach(btn => {
+        btn.onclick = e => {
+          const uid = e.target.dataset.uid;
+          const tr = e.target.closest('tr');
+          const novoNome = tr.querySelector('.nomeUsuarioInput').value.trim();
+          const novaFoto = tr.querySelector('.fotoUsuarioInput').value.trim();
+
+          if (novoNome === '') {
+            alert('Nome não pode ser vazio');
+            return;
+          }
+
+          db.ref('usuarios/' + uid).update({
+            nome: novoNome,
+            fotoPerfil: novaFoto
+          }).then(() => {
+            alert('Dados atualizados');
+          });
+        };
+      });
+
+      // Upload foto para Storage e atualizar DB
+      document.querySelectorAll('.btnUploadFoto').forEach(btn => {
+        btn.onclick = async e => {
+          const uid = e.target.dataset.uid;
+          const tr = e.target.closest('tr');
+          const inputFile = tr.querySelector('.uploadFotoInput');
+          const file = inputFile.files[0];
+          if (!file) {
+            alert('Selecione uma imagem para enviar');
+            return;
+          }
+
+          try {
+            const storageRef = storage.ref(`usuariosFotos/${uid}_${Date.now()}.jpg`);
+            const snapshot = await storageRef.put(file);
+            const url = await snapshot.ref.getDownloadURL();
+
+            await db.ref(`usuarios/${uid}`).update({ fotoPerfil: url });
+            alert('Foto atualizada com sucesso!');
+
+            inputFile.value = '';
+          } catch (error) {
+            alert('Erro ao enviar imagem: ' + error.message);
+          }
+        };
+      });
+
+    });
+  }
+
+  // Carrega grupos
+  function carregarGrupos() {
+    db.ref('grupos').on('value', snapshot => {
+      const grupos = snapshot.val() || {};
+      tabelaGruposBody.innerHTML = '';
+      if(Object.keys(grupos).length === 0){
+        tabelaGruposBody.innerHTML = '<tr><td colspan="3">Nenhum grupo encontrado.</td></tr>';
+        return;
+      }
+
+      for (const grupoId in grupos) {
+        const grupo = grupos[grupoId];
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${grupoId}</td>
+          <td><input type="text" value="${grupo.nome || ''}" data-id="${grupoId}" class="nomeGrupoInput" /></td>
+          <td><button data-id="${grupoId}" class="btnAlterarGrupo">Alterar Nome</button></td>
+        `;
+
+        tabelaGruposBody.appendChild(tr);
+      }
+
+      // Alterar nome grupo
+      document.querySelectorAll('.btnAlterarGrupo').forEach(btn => {
+        btn.onclick = e => {
+          const grupoId = e.target.dataset.id;
+          const tr = e.target.closest('tr');
+          const novoNome = tr.querySelector('.nomeGrupoInput').value.trim();
+
+          if (novoNome === '') {
+            alert('Nome do grupo não pode ser vazio');
+            return;
+          }
+
+          db.ref('grupos/' + grupoId).update({ nome: novoNome })
+            .then(() => alert('Nome do grupo atualizado'));
+        };
+      });
+
+    });
+  }
+
+  // Carrega solicitações grupos
+  function carregarSolicitacoes() {
+    db.ref('solicitacoesGrupos').on('value', snapshot => {
+      const solicitacoes = snapshot.val() || {};
+      tabelaSolicitacoesBody.innerHTML = '';
+      if(Object.keys(solicitacoes).length === 0){
+        tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Nenhuma solicitação pendente.</td></tr>';
+        return;
+      }
+
+      for (const id in solicitacoes) {
+        const s = solicitacoes[id];
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${id}</td>
+          <td>${s.nome}</td>
+          <td>${s.uidSolicitante}</td>
+          <td><button data-id="${id}" class="btnAprovar">Aprovar</button></td>
+          <td><button data-id="${id}" class="btnRejeitar">Rejeitar</button></td>
+        `;
+
+        tabelaSolicitacoesBody.appendChild(tr);
+      }
+
+      // Aprovar solicitação
+      document.querySelectorAll('.btnAprovar').forEach(btn => {
+        btn.onclick = e => {
+          const id = e.target.dataset.id;
+          const solicitacaoRef = db.ref('solicitacoesGrupos/' + id);
+
+          solicitacaoRef.once('value').then(snap => {
+            const dados = snap.val();
+            if(!dados) return alert('Solicitação não encontrada');
+
+            // Criar novo grupo
+            const novoGrupoRef = db.ref('grupos').push();
+            novoGrupoRef.set({
+              nome: dados.nome
+            }).then(() => {
+              // Remover solicitação
+              solicitacaoRef.remove();
+              alert('Grupo criado e solicitação removida');
+            });
+          });
+        };
+      });
+
+      // Rejeitar solicitação
+      document.querySelectorAll('.btnRejeitar').forEach(btn => {
+        btn.onclick = e => {
+          const id = e.target.dataset.id;
+          db.ref('solicitacoesGrupos/' + id).remove().then(() => {
+            alert('Solicitação rejeitada e removida');
+          });
+        };
+      });
+
+    });
+  }
+
+</script>
+
+</body>
+</html>
