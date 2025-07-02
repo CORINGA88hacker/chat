@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat Edu MT - Maninho</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 10px; background: #f5f5f5; }
+  #login, #perfil, #chat, #admin { max-width: 480px; margin: auto; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 6px #aaa; }
+  #chat { display: none; height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top: 10px; }
+  .msg { border-bottom: 1px solid #ddd; padding: 5px; display: flex; align-items: center; }
+  .msg img { border-radius: 50%; width: 40px; height: 40px; margin-right: 8px; }
+  .msg strong { margin-right: 8px; }
+  #opcoesFotos img { width: 60px; cursor: pointer; margin: 3px; border: 2px solid transparent; border-radius: 8px; }
+  #opcoesFotos img.selecionada { border-color: #007bff; }
+  #admin { margin-top: 20px; border-top: 2px solid #007bff; padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h2>Login Edu MT</h2>
+  <input type="email" id="email" placeholder="Seu e-mail @edu.mt.gov.br" />
+  <input type="password" id="senha" placeholder="Senha" />
+  <button id="btnLogin">Entrar</button>
+  <p id="msgLogin" style="color: red;"></p>
+</div>
+
+<div id="perfil" style="display:none;">
+  <h2>Escolha seu nome e foto de perfil</h2>
+  <input type="text" id="nomeUser" placeholder="Seu nome" /><br/><br/>
+  <div id="opcoesFotos"></div>
+  <button id="btnSalvarPerfil" disabled>Salvar Perfil</button>
+</div>
+
+<div id="chat">
+  <h2>Chat Edu MT</h2>
+  <div id="listaMensagens"></div>
+  <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." />
+  <button id="btnEnviarMsg">Enviar</button>
+  <button id="btnSair">Sair</button>
+</div>
+
+<div id="admin" style="display:none;">
+  <h3>Painel Admin</h3>
+  <input type="file" id="uploadFoto" />
+  <button id="btnUploadFoto">Enviar Foto de Perfil</button>
+  <p id="msgUpload"></p>
+</div>
+
+<script>
+  // Coloque aqui seu firebaseConfig (dados reais)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  };
+
+  // Inicializa Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+  const storage = firebase.storage();
+
+  const loginDiv = document.getElementById("login");
+  const perfilDiv = document.getElementById("perfil");
+  const chatDiv = document.getElementById("chat");
+  const adminDiv = document.getElementById("admin");
+  const msgLogin = document.getElementById("msgLogin");
+
+  let fotoSelecionada = null;
+  let usuarioAtual = null;
+
+  // Botão login
+  document.getElementById("btnLogin").onclick = () => {
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value;
+    msgLogin.textContent = "";
+
+    if (!email.endsWith("@edu.mt.gov.br")) {
+      msgLogin.textContent = "Só é permitido e-mail @edu.mt.gov.br";
+      return;
+    }
+
+    auth.signInWithEmailAndPassword(email, senha)
+      .catch(err => msgLogin.textContent = err.message);
+  };
+
+  // Verifica login e banimento
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      if (!user.email.endsWith("@edu.mt.gov.br")) {
+        alert("Acesso negado: e-mail não permitido.");
+        auth.signOut();
+        return;
+      }
+
+      // Verifica banimento
+      const banSnap = await db.ref("banidos/" + user.uid).once("value");
+      const banData = banSnap.val();
+      if (banData && Date.now() < banData.banido_ate) {
+        alert("Você está banido até " + new Date(banData.banido_ate).toLocaleString());
+        auth.signOut();
+        return;
+      }
+
+      usuarioAtual = user;
+
+      // Checa se já tem perfil
+      const perfilSnap = await db.ref("usuarios/" + user.uid).once("value");
+      if (perfilSnap.exists()) {
+        carregarChat();
+      } else {
+        carregarPerfil();
+      }
+
+      // Se for admin (exemplo e-mail fixo), mostra painel admin
+      if (user.email === "seuadmin@edu.mt.gov.br") {
+        adminDiv.style.display = "block";
+      } else {
+        adminDiv.style.display = "none";
+      }
+
+      loginDiv.style.display = "none";
+    } else {
+      usuarioAtual = null;
+      loginDiv.style.display = "block";
+      perfilDiv.style.display = "none";
+      chatDiv.style.display = "none";
+      adminDiv.style.display = "none";
+      limparChat();
+    }
+  });
+
+  // Carregar opções de fotos para perfil
+  function carregarFotosPerfil() {
+    const fotosDiv = document.getElementById("opcoesFotos");
+    fotosDiv.innerHTML = "Carregando fotos...";
+    db.ref("fotosPerfil").once("value").then(snapshot => {
+      const fotos = snapshot.val();
+      fotosDiv.innerHTML = "";
+      if (fotos) {
+        for (const key in fotos) {
+          const url = fotos[key];
+          const img = document.createElement("img");
+          img.src = url;
+          img.title = "Clique para escolher";
+          img.onclick = () => {
+            fotoSelecionada = url;
+            document.querySelectorAll("#opcoesFotos img").forEach(el => el.classList.remove("selecionada"));
+            img.classList.add("selecionada");
+            btnSalvarPerfil.disabled = false;
+          };
+          fotosDiv.appendChild(img);
+        }
+      } else {
+        fotosDiv.innerHTML = "Nenhuma foto disponível. Peça ao admin para enviar.";
+      }
+    });
+  }
+
+  // Tela perfil
+  const btnSalvarPerfil = document.getElementById("btnSalvarPerfil");
+  btnSalvarPerfil.onclick = async () => {
+    const nome = document.getElementById("nomeUser").value.trim();
+    if (!nome) {
+      alert("Digite seu nome.");
+      return;
+    }
+    if (!fotoSelecionada) {
+      alert("Escolha uma foto de perfil.");
+      return;
+    }
+    await db.ref("usuarios/" + usuarioAtual.uid).set({
+      nome: nome,
+      fotoPerfil: fotoSelecionada
+    });
+    carregarChat();
+  };
+
+  function carregarPerfil() {
+    perfilDiv.style.display = "block";
+    chatDiv.style.display = "none";
+    carregarFotosPerfil();
+    btnSalvarPerfil.disabled = true;
+  }
+
+  // Tela chat
+  const listaMensagens = document.getElementById("listaMensagens");
+  const inputMsg = document.getElementById("inputMsg");
+  const btnEnviarMsg = document.getElementById("btnEnviarMsg");
+  const btnSair = document.getElementById("btnSair");
+
+  btnEnviarMsg.onclick = async () => {
+    const texto = inputMsg.value.trim();
+    if (!texto) return;
+    const perfilSnap = await db.ref("usuarios/" + usuarioAtual.uid).once("value");
+    const perfil = perfilSnap.val();
+    if (!perfil) {
+      alert("Perfil não encontrado!");
+      return;
+    }
+
+    await db.ref("mensagens").push({
+      uid: usuarioAtual.uid,
+      nome: perfil.nome,
+      fotoPerfil: perfil.fotoPerfil,
+      texto: texto,
+      timestamp: Date.now()
+    });
+
+    inputMsg.value = "";
+  };
+
+  btnSair.onclick = () => auth.signOut();
+
+  // Receber mensagens em tempo real
+  db.ref("mensagens").limitToLast(100).on("child_added", snapshot => {
+    const msg = snapshot.val();
+    const div = document.createElement("div");
+    div.classList.add("msg");
+    div.innerHTML = `
+      <img src="${msg.fotoPerfil}" alt="${msg.nome}" />
+      <strong>${msg.nome}:</strong> ${msg.texto}
+    `;
+    listaMensagens.appendChild(div);
+    listaMensagens.scrollTop = listaMensagens.scrollHeight;
+  });
+
+  function limparChat() {
+    listaMensagens.innerHTML = "";
+  }
+
+  function carregarChat() {
+    perfilDiv.style.display = "none";
+    chatDiv.style.display = "block";
+    limparChat();
+  }
+
+  // Admin upload foto
+  const btnUploadFoto = document.getElementById("btnUploadFoto");
+  const uploadFotoInput = document.getElementById("uploadFoto");
+  const msgUpload = document.getElementById("msgUpload");
+
+  btnUploadFoto.onclick = () => {
+    const file = uploadFotoInput.files[0];
+    if (!file) {
+      alert("Selecione um arquivo para enviar!");
+      return;
+    }
+    const ref = storage.ref("fotosPerfil/" + file.name);
+    const uploadTask = ref.put(file);
+
+    uploadTask.on("state_changed",
+      null,
+      error => {
+        msgUpload.style.color = "red";
+        msgUpload.textContent = "Erro no upload: " + error.message;
+      },
+      () => {
+        uploadTask.snapshot.ref.getDownloadURL().then(url => {
+          db.ref("fotosPerfil").push(url);
+          msgUpload.style.color = "green";
+          msgUpload.textContent = "Foto enviada com sucesso!";
+          uploadFotoInput.value = "";
+          carregarFotosPerfil();
+        });
+      });
+  };
+</script>
+</body>
+</html>
