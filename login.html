@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | InstaClone</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="firebase.js"></script>
+</head>
+<body class="center">
+  <div class="login-box">
+    <h1>📸 InstaClone</h1>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Senha" />
+    <button id="btn-login">Entrar</button>
+    <button id="btn-signup">Criar Conta</button>
+    <p id="msg"></p>
+  </div>
+
+  <script>
+    const btnLogin = document.getElementById('btn-login');
+    const btnSignup = document.getElementById('btn-signup');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const msg = document.getElementById('msg');
+
+    btnLogin.onclick = () => {
+      const email = emailInput.value;
+      const senha = passwordInput.value;
+      firebase.auth().signInWithEmailAndPassword(email, senha)
+        .then(() => window.location.href = "index.html")
+        .catch(err => msg.textContent = err.message);
+    };
+
+    btnSignup.onclick = () => {
+      const email = emailInput.value;
+      const senha = passwordInput.value;
+      firebase.auth().createUserWithEmailAndPassword(email, senha)
+        .then(() => window.location.href = "index.html")
+        .catch(err => msg.textContent = err.message);
+    };
+  </script>
+</body>
+</html>
