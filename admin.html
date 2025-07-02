@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel Admin - Chat Edu MT</title>
+<title>Painel Admin - Sem Login</title>
 
 <style>
   body {
@@ -11,16 +11,13 @@
     margin: 10px;
     background: #f5f5f5;
   }
-  #login, #painelAdmin {
+  #painelAdmin {
     max-width: 480px;
     margin: auto;
     padding: 10px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 6px #aaa;
-  }
-  #painelAdmin {
-    display: none;
   }
   #listaUsuariosAdmin > div {
     border: 1px solid #ccc;
@@ -49,23 +46,14 @@
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
 
-<div id="login">
-  <h2>Login Admin</h2>
-  <input type="email" id="emailAdmin" placeholder="Email admin" />
-  <input type="password" id="senhaAdmin" placeholder="Senha" />
-  <button id="btnLoginAdmin">Entrar</button>
-  <p id="msgLoginAdmin" style="color:red;"></p>
-</div>
-
 <div id="painelAdmin">
-  <h2>Painel Admin</h2>
+  <h2>Painel Admin (sem login)</h2>
 
   <h3>Enviar foto de perfil</h3>
   <input type="file" id="uploadFoto" />
@@ -76,12 +64,10 @@
 
   <h3>Gerenciar usuários</h3>
   <div id="listaUsuariosAdmin">Carregando usuários...</div>
-
-  <button id="btnLogoutAdmin" style="margin-top:10px;">Sair</button>
 </div>
 
 <script>
-  // Coloque seu firebaseConfig aqui (igual ao outro)
+  // Seu firebaseConfig aqui:
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -93,46 +79,15 @@
   };
 
   firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
   const db = firebase.database();
   const storage = firebase.storage();
 
-  const loginDiv = document.getElementById("login");
-  const painelAdminDiv = document.getElementById("painelAdmin");
-  const msgLoginAdmin = document.getElementById("msgLoginAdmin");
-
   const listaUsuariosAdmin = document.getElementById("listaUsuariosAdmin");
-  const btnLogoutAdmin = document.getElementById("btnLogoutAdmin");
+  const btnUploadFoto = document.getElementById("btnUploadFoto");
+  const uploadFotoInput = document.getElementById("uploadFoto");
+  const msgUpload = document.getElementById("msgUpload");
 
-  // Login admin
-  document.getElementById("btnLoginAdmin").onclick = () => {
-    const email = document.getElementById("emailAdmin").value.trim();
-    const senha = document.getElementById("senhaAdmin").value;
-    msgLoginAdmin.textContent = "";
-
-    auth.signInWithEmailAndPassword(email, senha)
-      .then(() => {
-        if (auth.currentUser.email !== "seuadmin@edu.mt.gov.br") {
-          msgLoginAdmin.textContent = "Acesso negado: não é admin.";
-          auth.signOut();
-          return;
-        }
-        loginDiv.style.display = "none";
-        painelAdminDiv.style.display = "block";
-        carregarUsuariosAdmin();
-      })
-      .catch(err => {
-        msgLoginAdmin.textContent = err.message;
-      });
-  };
-
-  btnLogoutAdmin.onclick = () => {
-    auth.signOut();
-    painelAdminDiv.style.display = "none";
-    loginDiv.style.display = "block";
-  };
-
-  // Carregar lista usuarios
+  // Carregar usuários
   async function carregarUsuariosAdmin() {
     listaUsuariosAdmin.innerHTML = "Carregando usuários...";
     const snapshot = await db.ref("usuarios").once("value");
@@ -146,7 +101,6 @@
     for (const uid in usuarios) {
       const userData = usuarios[uid];
 
-      // Verifica banimento
       const banSnap = await db.ref("banidos/" + uid).once("value");
       const banData = banSnap.val();
 
@@ -167,7 +121,6 @@
     }
   }
 
-  // Funções globais para banir/desbanir (precisam estar no window)
   window.banirUsuario = async (uid) => {
     const input = document.getElementById("banTempo_" + uid);
     const minutos = parseInt(input.value);
@@ -186,11 +139,6 @@
     alert("Usuário desbanido.");
     carregarUsuariosAdmin();
   };
-
-  // Upload foto perfil admin
-  const btnUploadFoto = document.getElementById("btnUploadFoto");
-  const uploadFotoInput = document.getElementById("uploadFoto");
-  const msgUpload = document.getElementById("msgUpload");
 
   btnUploadFoto.onclick = () => {
     const file = uploadFotoInput.files[0];
@@ -217,6 +165,9 @@
         });
       });
   };
+
+  // Inicializa lista
+  carregarUsuariosAdmin();
 
 </script>
 
