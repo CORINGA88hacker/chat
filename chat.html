@@ -3,405 +3,232 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat Edu MT - Maninho</title>
+<title>Chat Tela Cheia com Menu Grupo</title>
 
-<!-- CSS -->
 <style>
-  body {
+  /* Remove margens e preenche toda a tela */
+  html, body {
+    height: 100%;
+    margin: 0;
     font-family: Arial, sans-serif;
-    margin: 10px;
-    background: #f5f5f5;
+    background: #f0f0f0;
   }
-  #login, #perfil, #chat, #admin {
-    max-width: 480px;
-    margin: auto;
-    padding: 10px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px #aaa;
-  }
-  #chat {
-    display: none;
-    height: 400px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 5px;
-    margin-top: 10px;
-  }
-  .msg {
-    border-bottom: 1px solid #ddd;
-    padding: 5px;
+
+  /* Container flex horizontal */
+  #app {
     display: flex;
-    align-items: center;
+    height: 100vh; /* altura da viewport inteira */
+    width: 100vw; /* largura total */
+    overflow: hidden;
   }
-  .msg img {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    margin-right: 8px;
-  }
-  .msg strong {
-    margin-right: 8px;
-  }
-  #opcoesFotos img {
-    width: 60px;
-    cursor: pointer;
-    margin: 3px;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    transition: border-color 0.3s;
-  }
-  #opcoesFotos img:hover {
-    border-color: #007bff;
-  }
-  #opcoesFotos img.selecionada {
-    border-color: #007bff;
-  }
-  #admin {
-    margin-top: 20px;
-    border-top: 2px solid #007bff;
-    padding-top: 10px;
-  }
-  button {
-    cursor: pointer;
-  }
-  input[type="text"], input[type="email"], input[type="password"] {
-    width: calc(100% - 20px);
-    padding: 8px 10px;
-    margin: 5px 0 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+
+  /* Menu lateral grupos */
+  #menuGrupos {
+    width: 250px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
     box-sizing: border-box;
   }
-</style>
 
-<!-- Firebase libs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  #menuGrupos h2 {
+    margin-top: 0;
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 10px;
+  }
+
+  #listaGrupos {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+
+  .grupoItem {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #34495e;
+    transition: background 0.3s;
+  }
+
+  .grupoItem:hover, .grupoItem.selecionado {
+    background: #1abc9c;
+  }
+
+  /* Área de conversa */
+  #areaChat {
+    flex-grow: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #headerChat {
+    background: #1abc9c;
+    color: white;
+    padding: 15px;
+    font-size: 18px;
+    border-bottom: 2px solid #16a085;
+  }
+
+  #mensagens {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  .mensagem {
+    margin-bottom: 12px;
+  }
+
+  .mensagem .nome {
+    font-weight: bold;
+    margin-bottom: 3px;
+  }
+
+  .mensagem .texto {
+    background: #ecf0f1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  #inputArea {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+
+  #inputMsg {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+
+  #btnEnviar {
+    margin-left: 10px;
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 0 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+
+  #btnEnviar:hover {
+    background: #16a085;
+  }
+</style>
 
 </head>
 <body>
 
-<!-- Login -->
-<div id="login">
-  <h2>Login Edu MT</h2>
-
-  <input type="email" id="email" placeholder="Seu e-mail @edu.mt.gov.br" />
-  <input type="password" id="senha" placeholder="Senha" />
-
-  <button id="btnLogin">Entrar</button>
-  <button id="btnMostrarRegistro">Criar Conta</button>
-
-  <div id="registro" style="display:none; margin-top:10px;">
-    <input type="email" id="emailRegistro" placeholder="Seu e-mail @edu.mt.gov.br" />
-    <input type="password" id="senhaRegistro" placeholder="Senha" />
-    <button id="btnRegistrar">Registrar</button>
-    <button id="btnCancelarRegistro">Cancelar</button>
-    <p id="msgRegistro" style="color:red;"></p>
+<div id="app">
+  <div id="menuGrupos">
+    <h2>Grupos</h2>
+    <div id="listaGrupos">
+      <!-- Grupos vão aparecer aqui -->
+    </div>
   </div>
 
-  <p id="msgLogin" style="color: red;"></p>
+  <div id="areaChat">
+    <div id="headerChat">Selecione um grupo</div>
+    <div id="mensagens"></div>
+    <div id="inputArea">
+      <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." disabled />
+      <button id="btnEnviar" disabled>Enviar</button>
+    </div>
+  </div>
 </div>
 
-<!-- Perfil -->
-<div id="perfil" style="display:none;">
-  <h2>Escolha seu nome e foto de perfil</h2>
-  <input type="text" id="nomeUser" placeholder="Seu nome" /><br/><br/>
-  <div id="opcoesFotos"></div>
-  <button id="btnSalvarPerfil" disabled>Salvar Perfil</button>
-</div>
-
-<!-- Chat -->
-<div id="chat">
-  <h2>Chat Edu MT</h2>
-  <div id="listaMensagens"></div>
-  <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." />
-  <button id="btnEnviarMsg">Enviar</button>
-  <button id="btnSair">Sair</button>
-</div>
-
-<!-- Admin -->
-<div id="admin" style="display:none;">
-  <h3>Painel Admin</h3>
-  <input type="file" id="uploadFoto" />
-  <button id="btnUploadFoto">Enviar Foto de Perfil</button>
-  <p id="msgUpload"></p>
-</div>
-
-<!-- JS -->
 <script>
-  // Coloque aqui seu firebaseConfig (dados reais)
-  const firebaseConfig = {
-    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
-    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
-    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
-    projectId: "projeto-deus-yato-928-sk",
-    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
-    messagingSenderId: "790408726854",
-    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  // Exemplo simples de grupos
+  const grupos = [
+    { id: 'grupo1', nome: 'Grupo 1' },
+    { id: 'grupo2', nome: 'Grupo 2' },
+    { id: 'grupo3', nome: 'Grupo 3' }
+  ];
+
+  const listaGruposDiv = document.getElementById('listaGrupos');
+  const headerChat = document.getElementById('headerChat');
+  const mensagensDiv = document.getElementById('mensagens');
+  const inputMsg = document.getElementById('inputMsg');
+  const btnEnviar = document.getElementById('btnEnviar');
+
+  let grupoSelecionado = null;
+  let mensagensPorGrupo = {
+    grupo1: [],
+    grupo2: [],
+    grupo3: []
   };
 
-  // Inicializa Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
-  const storage = firebase.storage();
-
-  // Elementos
-  const loginDiv = document.getElementById("login");
-  const perfilDiv = document.getElementById("perfil");
-  const chatDiv = document.getElementById("chat");
-  const adminDiv = document.getElementById("admin");
-  const msgLogin = document.getElementById("msgLogin");
-
-  const btnMostrarRegistro = document.getElementById("btnMostrarRegistro");
-  const registroDiv = document.getElementById("registro");
-  const btnRegistrar = document.getElementById("btnRegistrar");
-  const btnCancelarRegistro = document.getElementById("btnCancelarRegistro");
-  const msgRegistro = document.getElementById("msgRegistro");
-
-  let fotoSelecionada = null;
-  let usuarioAtual = null;
-
-  // Mostrar formulário registro
-  btnMostrarRegistro.onclick = () => {
-    registroDiv.style.display = "block";
-    msgLogin.textContent = "";
-  };
-
-  // Cancelar registro
-  btnCancelarRegistro.onclick = () => {
-    registroDiv.style.display = "none";
-    msgRegistro.textContent = "";
-  };
-
-  // Registrar usuário
-  btnRegistrar.onclick = () => {
-    const email = document.getElementById("emailRegistro").value.trim();
-    const senha = document.getElementById("senhaRegistro").value;
-
-    msgRegistro.textContent = "";
-
-    if (!email.endsWith("@edu.mt.gov.br")) {
-      msgRegistro.textContent = "Só e-mails @edu.mt.gov.br são permitidos.";
-      return;
-    }
-
-    if (senha.length < 6) {
-      msgRegistro.textContent = "Senha deve ter pelo menos 6 caracteres.";
-      return;
-    }
-
-    auth.createUserWithEmailAndPassword(email, senha)
-      .then(() => {
-        registroDiv.style.display = "none";
-        msgRegistro.textContent = "";
-        alert("Conta criada com sucesso! Faça login.");
-      })
-      .catch(err => {
-        msgRegistro.textContent = err.message;
-      });
-  };
-
-  // Login
-  document.getElementById("btnLogin").onclick = () => {
-    const email = document.getElementById("email").value.trim();
-    const senha = document.getElementById("senha").value;
-    msgLogin.textContent = "";
-
-    if (!email.endsWith("@edu.mt.gov.br")) {
-      msgLogin.textContent = "Só é permitido e-mail @edu.mt.gov.br";
-      return;
-    }
-
-    auth.signInWithEmailAndPassword(email, senha)
-      .catch(err => msgLogin.textContent = err.message);
-  };
-
-  // Verifica login, perfil e banimento
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      if (!user.email.endsWith("@edu.mt.gov.br")) {
-        alert("Acesso negado: e-mail não permitido.");
-        auth.signOut();
-        return;
-      }
-
-      // Verifica banimento
-      const banSnap = await db.ref("banidos/" + user.uid).once("value");
-      const banData = banSnap.val();
-      if (banData && Date.now() < banData.banido_ate) {
-        alert("Você está banido até " + new Date(banData.banido_ate).toLocaleString());
-        auth.signOut();
-        return;
-      }
-
-      usuarioAtual = user;
-
-      // Checa se já tem perfil
-      const perfilSnap = await db.ref("usuarios/" + user.uid).once("value");
-      if (perfilSnap.exists()) {
-        carregarChat();
-      } else {
-        carregarPerfil();
-      }
-
-      // Se for admin (exemplo e-mail fixo), mostra painel admin
-      if (user.email === "seuadmin@edu.mt.gov.br") {
-        adminDiv.style.display = "block";
-      } else {
-        adminDiv.style.display = "none";
-      }
-
-      loginDiv.style.display = "none";
-    } else {
-      usuarioAtual = null;
-      loginDiv.style.display = "block";
-      perfilDiv.style.display = "none";
-      chatDiv.style.display = "none";
-      adminDiv.style.display = "none";
-      limparChat();
-    }
-  });
-
-  // Carregar opções de fotos para perfil
-  function carregarFotosPerfil() {
-    const fotosDiv = document.getElementById("opcoesFotos");
-    fotosDiv.innerHTML = "Carregando fotos...";
-    db.ref("fotosPerfil").once("value").then(snapshot => {
-      const fotos = snapshot.val();
-      fotosDiv.innerHTML = "";
-      if (fotos) {
-        for (const key in fotos) {
-          const url = fotos[key];
-          const img = document.createElement("img");
-          img.src = url;
-          img.title = "Clique para escolher";
-          img.onclick = () => {
-            fotoSelecionada = url;
-            document.querySelectorAll("#opcoesFotos img").forEach(el => el.classList.remove("selecionada"));
-            img.classList.add("selecionada");
-            btnSalvarPerfil.disabled = false;
-          };
-          fotosDiv.appendChild(img);
-        }
-      } else {
-        fotosDiv.innerHTML = "Nenhuma foto disponível. Peça ao admin para enviar.";
-      }
+  // Mostra os grupos
+  function mostrarGrupos() {
+    listaGruposDiv.innerHTML = '';
+    grupos.forEach(g => {
+      const div = document.createElement('div');
+      div.className = 'grupoItem';
+      div.textContent = g.nome;
+      div.onclick = () => selecionarGrupo(g.id);
+      listaGruposDiv.appendChild(div);
     });
   }
 
-  // Tela perfil
-  const btnSalvarPerfil = document.getElementById("btnSalvarPerfil");
-  btnSalvarPerfil.onclick = async () => {
-    const nome = document.getElementById("nomeUser").value.trim();
-    if (!nome) {
-      alert("Digite seu nome.");
-      return;
-    }
-    if (!fotoSelecionada) {
-      alert("Escolha uma foto de perfil.");
-      return;
-    }
-    await db.ref("usuarios/" + usuarioAtual.uid).set({
-      nome: nome,
-      fotoPerfil: fotoSelecionada
-    });
-    carregarChat();
-  };
+  // Seleciona grupo e mostra mensagens
+  function selecionarGrupo(id) {
+    grupoSelecionado = id;
+    headerChat.textContent = grupos.find(g => g.id === id).nome;
 
-  function carregarPerfil() {
-    perfilDiv.style.display = "block";
-    chatDiv.style.display = "none";
-    carregarFotosPerfil();
-    btnSalvarPerfil.disabled = true;
+    // Atualiza seleção visual
+    document.querySelectorAll('.grupoItem').forEach(el => {
+      el.classList.toggle('selecionado', el.textContent === headerChat.textContent);
+    });
+
+    mostrarMensagens();
+    inputMsg.disabled = false;
+    btnEnviar.disabled = false;
+    inputMsg.focus();
   }
 
-  // Tela chat
-  const listaMensagens = document.getElementById("listaMensagens");
-  const inputMsg = document.getElementById("inputMsg");
-  const btnEnviarMsg = document.getElementById("btnEnviarMsg");
-  const btnSair = document.getElementById("btnSair");
+  // Mostra mensagens do grupo selecionado
+  function mostrarMensagens() {
+    mensagensDiv.innerHTML = '';
+    if (!grupoSelecionado) return;
+    mensagensPorGrupo[grupoSelecionado].forEach(msg => {
+      const div = document.createElement('div');
+      div.className = 'mensagem';
+      div.innerHTML = `<div class="nome">${msg.nome}</div><div class="texto">${msg.texto}</div>`;
+      mensagensDiv.appendChild(div);
+    });
+    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+  }
 
-  btnEnviarMsg.onclick = async () => {
+  // Envia mensagem
+  btnEnviar.onclick = () => {
     const texto = inputMsg.value.trim();
-    if (!texto) return;
-    const perfilSnap = await db.ref("usuarios/" + usuarioAtual.uid).once("value");
-    const perfil = perfilSnap.val();
-    if (!perfil) {
-      alert("Perfil não encontrado!");
-      return;
-    }
-
-    await db.ref("mensagens").push({
-      uid: usuarioAtual.uid,
-      nome: perfil.nome,
-      fotoPerfil: perfil.fotoPerfil,
-      texto: texto,
-      timestamp: Date.now()
+    if (!texto || !grupoSelecionado) return;
+    mensagensPorGrupo[grupoSelecionado].push({
+      nome: 'Você',
+      texto
     });
-
-    inputMsg.value = "";
+    inputMsg.value = '';
+    mostrarMensagens();
   };
 
-  btnSair.onclick = () => auth.signOut();
-
-  // Receber mensagens em tempo real
-  db.ref("mensagens").limitToLast(100).on("child_added", snapshot => {
-    const msg = snapshot.val();
-    const div = document.createElement("div");
-    div.classList.add("msg");
-    div.innerHTML = `
-      <img src="${msg.fotoPerfil}" alt="${msg.nome}" />
-      <strong>${msg.nome}:</strong> ${msg.texto}
-    `;
-    listaMensagens.appendChild(div);
-    listaMensagens.scrollTop = listaMensagens.scrollHeight;
-  });
-
-  function limparChat() {
-    listaMensagens.innerHTML = "";
-  }
-
-  function carregarChat() {
-    perfilDiv.style.display = "none";
-    chatDiv.style.display = "block";
-    limparChat();
-  }
-
-  // Admin upload foto
-  const btnUploadFoto = document.getElementById("btnUploadFoto");
-  const uploadFotoInput = document.getElementById("uploadFoto");
-  const msgUpload = document.getElementById("msgUpload");
-
-  btnUploadFoto.onclick = () => {
-    const file = uploadFotoInput.files[0];
-    if (!file) {
-      alert("Selecione um arquivo para enviar!");
-      return;
-    }
-    const ref = storage.ref("fotosPerfil/" + file.name);
-    const uploadTask = ref.put(file);
-
-    uploadTask.on("state_changed",
-      null,
-      error => {
-        msgUpload.style.color = "red";
-        msgUpload.textContent = "Erro no upload: " + error.message;
-      },
-      () => {
-        uploadTask.snapshot.ref.getDownloadURL().then(url => {
-          db.ref("fotosPerfil").push(url);
-          msgUpload.style.color = "green";
-          msgUpload.textContent = "Foto enviada com sucesso!";
-          uploadFotoInput.value = "";
-          carregarFotosPerfil();
-        });
-      });
-  };
+  mostrarGrupos();
 </script>
+
 </body>
 </html>
