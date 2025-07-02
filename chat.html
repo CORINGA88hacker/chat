@@ -4,24 +4,88 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Chat Edu MT - Maninho</title>
+
+<!-- CSS -->
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    background: #f5f5f5;
+  }
+  #login, #perfil, #chat, #admin {
+    max-width: 480px;
+    margin: auto;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px #aaa;
+  }
+  #chat {
+    display: none;
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin-top: 10px;
+  }
+  .msg {
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+  }
+  .msg img {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin-right: 8px;
+  }
+  .msg strong {
+    margin-right: 8px;
+  }
+  #opcoesFotos img {
+    width: 60px;
+    cursor: pointer;
+    margin: 3px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+  }
+  #opcoesFotos img:hover {
+    border-color: #007bff;
+  }
+  #opcoesFotos img.selecionada {
+    border-color: #007bff;
+  }
+  #admin {
+    margin-top: 20px;
+    border-top: 2px solid #007bff;
+    padding-top: 10px;
+  }
+  button {
+    cursor: pointer;
+  }
+  input[type="text"], input[type="email"], input[type="password"] {
+    width: calc(100% - 20px);
+    padding: 8px 10px;
+    margin: 5px 0 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+</style>
+
+<!-- Firebase libs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<style>
-  body { font-family: Arial, sans-serif; margin: 10px; background: #f5f5f5; }
-  #login, #perfil, #chat, #admin { max-width: 480px; margin: auto; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 6px #aaa; }
-  #chat { display: none; height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top: 10px; }
-  .msg { border-bottom: 1px solid #ddd; padding: 5px; display: flex; align-items: center; }
-  .msg img { border-radius: 50%; width: 40px; height: 40px; margin-right: 8px; }
-  .msg strong { margin-right: 8px; }
-  #opcoesFotos img { width: 60px; cursor: pointer; margin: 3px; border: 2px solid transparent; border-radius: 8px; }
-  #opcoesFotos img.selecionada { border-color: #007bff; }
-  #admin { margin-top: 20px; border-top: 2px solid #007bff; padding-top: 10px; }
-</style>
+
 </head>
 <body>
 
+<!-- Login -->
 <div id="login">
   <h2>Login Edu MT</h2>
 
@@ -42,6 +106,7 @@
   <p id="msgLogin" style="color: red;"></p>
 </div>
 
+<!-- Perfil -->
 <div id="perfil" style="display:none;">
   <h2>Escolha seu nome e foto de perfil</h2>
   <input type="text" id="nomeUser" placeholder="Seu nome" /><br/><br/>
@@ -49,6 +114,7 @@
   <button id="btnSalvarPerfil" disabled>Salvar Perfil</button>
 </div>
 
+<!-- Chat -->
 <div id="chat">
   <h2>Chat Edu MT</h2>
   <div id="listaMensagens"></div>
@@ -57,6 +123,7 @@
   <button id="btnSair">Sair</button>
 </div>
 
+<!-- Admin -->
 <div id="admin" style="display:none;">
   <h3>Painel Admin</h3>
   <input type="file" id="uploadFoto" />
@@ -64,6 +131,7 @@
   <p id="msgUpload"></p>
 </div>
 
+<!-- JS -->
 <script>
   // Coloque aqui seu firebaseConfig (dados reais)
   const firebaseConfig = {
