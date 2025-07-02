@@ -2,17 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Mini Instagram Firebase</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: #f4f4f4; padding: 20px; }
-    #feed img { width: 100%; max-height: 400px; object-fit: cover; margin-bottom: 10px; }
-    #posts { margin-top: 20px; }
-    .post { background: #fff; border-radius: 10px; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .post img { max-width: 100%; border-radius: 10px; }
-    input, button { margin: 5px 0; padding: 10px; width: 100%; border-radius: 5px; border: 1px solid #ccc; }
-    button { background-color: #3498db; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #2980b9; }
-  </style>
+  <title>🔥 Mini Instagram</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script defer src="firebase.js"></script>
 </head>
 <body>
 
@@ -36,31 +32,7 @@
   <h2>🖼️ Feed</h2>
   <div id="posts"></div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
   <script>
-    // Firebase config (o seu)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
-      authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
-      databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
-      projectId: "projeto-deus-yato-928-sk",
-      storageBucket: "projeto-deus-yato-928-sk.appspot.com",
-      messagingSenderId: "790408726854",
-      appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
-    };
-
-    // Inicializa Firebase
-    firebase.initializeApp(firebaseConfig);
-
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const btnLogin = document.getElementById('btn-login');
@@ -72,29 +44,23 @@
     const btnUpload = document.getElementById('btn-upload');
     const postsDiv = document.getElementById('posts');
 
-    // Login
     btnLogin.onclick = () => {
       const email = emailInput.value;
       const password = passwordInput.value;
-      auth.signInWithEmailAndPassword(email, password)
-        .catch(err => alert(err.message));
+      auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
     };
 
-    // Cadastro
     btnSignup.onclick = () => {
       const email = emailInput.value;
       const password = passwordInput.value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .catch(err => alert(err.message));
+      auth.createUserWithEmailAndPassword(email, password).catch(err => alert(err.message));
     };
 
-    // Logout
     btnLogout.onclick = () => auth.signOut();
 
-    // Monitorar autenticação
     auth.onAuthStateChanged(user => {
-      if(user) {
-        userInfo.textContent = `Logado como: ${user.email}`;
+      if (user) {
+        userInfo.innerHTML = `Logado como: <a href="perfil.html?uid=${user.uid}">${user.email}</a>`;
         btnLogout.style.display = 'inline';
         btnLogin.style.display = 'none';
         btnSignup.style.display = 'none';
@@ -114,22 +80,13 @@
       }
     });
 
-    // Upload imagem e salvar post
     btnUpload.onclick = async () => {
       const file = fileInput.files[0];
-      if(!file) {
-        alert('Selecione uma imagem!');
-        return;
-      }
+      if (!file) return alert('Selecione uma imagem!');
       const user = auth.currentUser;
-      if(!user) {
-        alert('Você precisa estar logado!');
-        return;
-      }
-
-      const fileRef = storage.ref().child(`posts/${user.uid}/${Date.now()}_${file.name}`);
-      await fileRef.put(file);
-      const photoURL = await fileRef.getDownloadURL();
+      const ref = storage.ref(`posts/${user.uid}/${Date.now()}_${file.name}`);
+      await ref.put(file);
+      const photoURL = await ref.getDownloadURL();
 
       await db.collection('posts').add({
         userId: user.uid,
@@ -142,22 +99,70 @@
       loadPosts();
     };
 
-    // Carregar feed
-    function loadPosts() {
-      db.collection('posts').orderBy('createdAt', 'desc').limit(50).get()
-        .then(snapshot => {
-          postsDiv.innerHTML = '';
-          snapshot.forEach(doc => {
-            const post = doc.data();
-            const postEl = document.createElement('div');
-            postEl.classList.add('post');
-            postEl.innerHTML = `
-              <b>${post.email}</b><br/>
-              <img src="${post.photoURL}" alt="Post" />
-            `;
-            postsDiv.appendChild(postEl);
-          });
-        });
+    async function loadPosts() {
+      const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').get();
+      postsDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const post = doc.data();
+        const postId = doc.id;
+        const postEl = document.createElement('div');
+        postEl.className = 'post';
+        postEl.innerHTML = `
+          <b><a href="perfil.html?uid=${post.userId}">${post.email}</a></b><br>
+          <img src="${post.photoURL}" alt="Post" /><br>
+          <button onclick="likePost('${postId}')">❤️ Curtir</button>
+          <span id="like-count-${postId}">0</span> curtidas
+          <div class="comment-box">
+            <input type="text" placeholder="Comentário..." id="comment-${postId}" />
+            <button onclick="commentPost('${postId}')">Comentar</button>
+            <div id="comments-${postId}"></div>
+          </div>
+        `;
+        postsDiv.appendChild(postEl);
+        loadComments(postId);
+        loadLikes(postId);
+      });
+    }
+
+    async function commentPost(postId) {
+      const input = document.getElementById(`comment-${postId}`);
+      const text = input.value.trim();
+      if (!text) return;
+      const user = auth.currentUser;
+      await db.collection('posts').doc(postId).collection('comments').add({
+        text,
+        user: user.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      input.value = '';
+      loadComments(postId);
+    }
+
+    async function loadComments(postId) {
+      const container = document.getElementById(`comments-${postId}`);
+      const snapshot = await db.collection('posts').doc(postId).collection('comments').orderBy('createdAt').get();
+      container.innerHTML = '';
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        container.innerHTML += `<p><b>${c.user}:</b> ${c.text}</p>`;
+      });
+    }
+
+    async function likePost(postId) {
+      const user = auth.currentUser;
+      const likeRef = db.collection('posts').doc(postId).collection('likes').doc(user.uid);
+      const docSnap = await likeRef.get();
+      if (docSnap.exists) {
+        await likeRef.delete(); // descurtir
+      } else {
+        await likeRef.set({ likedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      loadLikes(postId);
+    }
+
+    async function loadLikes(postId) {
+      const snap = await db.collection('posts').doc(postId).collection('likes').get();
+      document.getElementById(`like-count-${postId}`).textContent = snap.size;
     }
   </script>
 </body>
