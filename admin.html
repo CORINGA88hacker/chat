@@ -178,10 +178,11 @@
           <th>Alterar Foto URL</th>
           <th>Alterar Nome</th>
           <th>Upload Nova Foto</th>
+          <th>Excluir</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td colspan="7">Carregando usuários...</td></tr>
+        <tr><td colspan="8">Carregando usuários...</td></tr>
       </tbody>
     </table>
   </section>
@@ -193,7 +194,7 @@
         <tr>
           <th>ID</th>
           <th>Nome do Grupo</th>
-          <th>Alterar Nome</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -256,19 +257,21 @@
   const adminToggle = document.getElementById('adminToggle');
   const adminSection = document.getElementById('adminSection');
 
-  // Login Google
+  const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
+  const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
+  const tabelaSolicitacoesBody = document.querySelector('#tabelaSolicitacoes tbody');
+
   btnLoginGoogle.onclick = () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(e => alert('Erro no login: '+e.message));
+    auth.signInWithPopup(provider).catch(e => alert('Erro no login: ' + e.message));
   };
 
   btnLogout.onclick = () => {
     auth.signOut();
   };
 
-  // Controla exibição admin
   adminToggle.onclick = () => {
-    if(adminSection.style.display === 'none'){
+    if (adminSection.style.display === 'none') {
       adminSection.style.display = 'block';
       adminToggle.textContent = 'Ocultar Admin';
     } else {
@@ -277,16 +280,14 @@
     }
   };
 
-  // Ao mudar usuário logado
   auth.onAuthStateChanged(user => {
-    if(user){
-      if(user.emailVerified === false) {
+    if (user) {
+      if (user.emailVerified === false) {
         alert('Por favor, verifique seu email para continuar.');
         auth.signOut();
         return;
       }
 
-      // Mostra dados
       loginSection.style.display = 'none';
       chatSection.style.display = 'block';
       btnLogout.style.display = 'inline-block';
@@ -297,7 +298,7 @@
 
       // Cria no DB se não existir
       db.ref('usuarios/' + user.uid).once('value').then(snap => {
-        if(!snap.exists()){
+        if (!snap.exists()) {
           db.ref('usuarios/' + user.uid).set({
             nome: user.displayName || '',
             email: user.email || '',
@@ -307,10 +308,7 @@
         }
       });
 
-      // Carrega chat
       carregarMensagens();
-
-      // Carrega admin só pra quem for admin (pode ajustar isso)
       carregarUsuarios();
       carregarGrupos();
       carregarSolicitacoes();
@@ -321,35 +319,32 @@
       btnLogout.style.display = 'none';
       userInfo.style.display = 'none';
       chatMessages.innerHTML = '';
-      tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Faça login para ver usuários</td></tr>';
+      tabelaUsuariosBody.innerHTML = '<tr><td colspan="8">Faça login para ver usuários</td></tr>';
       tabelaGruposBody.innerHTML = '<tr><td colspan="3">Faça login para ver grupos</td></tr>';
       tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Faça login para ver solicitações</td></tr>';
     }
   });
 
-  // Enviar mensagem
   btnSendMsg.onclick = () => {
     enviarMensagem();
   };
   inputMsg.addEventListener('keydown', e => {
-    if(e.key === 'Enter') enviarMensagem();
+    if (e.key === 'Enter') enviarMensagem();
   });
 
-  function enviarMensagem(){
+  function enviarMensagem() {
     const texto = inputMsg.value.trim();
-    if(texto === '') return;
+    if (texto === '') return;
 
     const user = auth.currentUser;
-    if(!user) return alert('Faça login para enviar mensagens');
+    if (!user) return alert('Faça login para enviar mensagens');
 
-    // Verifica se banido
     db.ref('usuarios/' + user.uid).once('value').then(snap => {
-      if(snap.exists() && snap.val().banido){
+      if (snap.exists() && snap.val().banido) {
         alert('Você está banido e não pode enviar mensagens.');
         return;
       }
 
-      // Salva mensagem
       const msgRef = db.ref('mensagens').push();
       msgRef.set({
         uid: user.uid,
@@ -362,16 +357,15 @@
     });
   }
 
-  // Mostrar mensagens
-  function carregarMensagens(){
+  function carregarMensagens() {
     db.ref('mensagens').limitToLast(50).on('value', snapshot => {
       const msgs = snapshot.val() || {};
       chatMessages.innerHTML = '';
-      for(const key in msgs){
+      for (const key in msgs) {
         const m = msgs[key];
         const div = document.createElement('div');
         div.classList.add('msg');
-        if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
+        if (auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
 
         div.innerHTML = `
           <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" />
@@ -383,7 +377,6 @@
     });
   }
 
-  // Escape HTML para segurança básica
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.innerText = text;
@@ -392,17 +385,12 @@
 
   /* ------------------ Admin --------------------- */
 
-  const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
-  const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
-  const tabelaSolicitacoesBody = document.querySelector('#tabelaSolicitacoes tbody');
-
-  // Carrega usuários
   function carregarUsuarios() {
     db.ref('usuarios').on('value', snapshot => {
       const users = snapshot.val() || {};
       tabelaUsuariosBody.innerHTML = '';
-      if(Object.keys(users).length === 0){
-        tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Nenhum usuário encontrado.</td></tr>';
+      if (Object.keys(users).length === 0) {
+        tabelaUsuariosBody.innerHTML = '<tr><td colspan="8">Nenhum usuário encontrado.</td></tr>';
         return;
       }
 
@@ -411,7 +399,6 @@
         const banido = user.banido || false;
 
         const tr = document.createElement('tr');
-
         tr.innerHTML = `
           <td><img src="${user.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUserAdmin" /></td>
           <td>${uid}</td>
@@ -423,12 +410,13 @@
             <input type="file" accept="image/*" data-uid="${uid}" class="uploadFotoInput" />
             <button data-uid="${uid}" class="btnUploadFoto">Enviar Foto</button>
           </td>
+          <td><button data-uid="${uid}" class="btnExcluir" style="background:#e74c3c;color:#fff;">Excluir</button></td>
         `;
 
         tabelaUsuariosBody.appendChild(tr);
       }
 
-      // Botões banir/desbanir
+      // Banir / Desbanir
       document.querySelectorAll('.btnBanir').forEach(btn => {
         btn.onclick = e => {
           const uid = e.target.dataset.uid;
@@ -441,7 +429,7 @@
         };
       });
 
-      // Botão alterar nome e foto via input
+      // Alterar nome e foto via input
       document.querySelectorAll('.btnAlterar').forEach(btn => {
         btn.onclick = e => {
           const uid = e.target.dataset.uid;
@@ -490,15 +478,26 @@
         };
       });
 
+      // Excluir usuário
+      document.querySelectorAll('.btnExcluir').forEach(btn => {
+        btn.onclick = e => {
+          const uid = e.target.dataset.uid;
+          if (confirm('Deseja realmente excluir este usuário e todos seus dados?')) {
+            db.ref('usuarios/' + uid).remove().then(() => {
+              alert('Usuário excluído.');
+            });
+          }
+        };
+      });
     });
   }
 
-  // Carrega grupos
   function carregarGrupos() {
     db.ref('grupos').on('value', snapshot => {
       const grupos = snapshot.val() || {};
       tabelaGruposBody.innerHTML = '';
-      if(Object.keys(grupos).length === 0){
+
+      if (Object.keys(grupos).length === 0) {
         tabelaGruposBody.innerHTML = '<tr><td colspan="3">Nenhum grupo encontrado.</td></tr>';
         return;
       }
@@ -510,94 +509,14 @@
         tr.innerHTML = `
           <td>${grupoId}</td>
           <td><input type="text" value="${grupo.nome || ''}" data-id="${grupoId}" class="nomeGrupoInput" /></td>
-          <td><button data-id="${grupoId}" class="btnAlterarGrupo">Alterar Nome</button></td>
+          <td>
+            <button data-id="${grupoId}" class="btnAlterarGrupo">Alterar Nome</button>
+            <button data-id="${grupoId}" class="btnRemoverGrupo" style="background:#e74c3c;color:#fff;margin-left:5px;">Remover</button>
+            <button data-id="${grupoId}" class="btnGerenciarMembros" style="margin-left:5px;">Membros</button>
+          </td>
         `;
 
         tabelaGruposBody.appendChild(tr);
       }
 
-      // Alterar nome grupo
-      document.querySelectorAll('.btnAlterarGrupo').forEach(btn => {
-        btn.onclick = e => {
-          const grupoId = e.target.dataset.id;
-          const tr = e.target.closest('tr');
-          const novoNome = tr.querySelector('.nomeGrupoInput').value.trim();
-
-          if (novoNome === '') {
-            alert('Nome do grupo não pode ser vazio');
-            return;
-          }
-
-          db.ref('grupos/' + grupoId).update({ nome: novoNome })
-            .then(() => alert('Nome do grupo atualizado'));
-        };
-      });
-
-    });
-  }
-
-  // Carrega solicitações grupos
-  function carregarSolicitacoes() {
-    db.ref('solicitacoesGrupos').on('value', snapshot => {
-      const solicitacoes = snapshot.val() || {};
-      tabelaSolicitacoesBody.innerHTML = '';
-      if(Object.keys(solicitacoes).length === 0){
-        tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Nenhuma solicitação pendente.</td></tr>';
-        return;
-      }
-
-      for (const id in solicitacoes) {
-        const s = solicitacoes[id];
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-          <td>${id}</td>
-          <td>${s.nome}</td>
-          <td>${s.uidSolicitante}</td>
-          <td><button data-id="${id}" class="btnAprovar">Aprovar</button></td>
-          <td><button data-id="${id}" class="btnRejeitar">Rejeitar</button></td>
-        `;
-
-        tabelaSolicitacoesBody.appendChild(tr);
-      }
-
-      // Aprovar solicitação
-      document.querySelectorAll('.btnAprovar').forEach(btn => {
-        btn.onclick = e => {
-          const id = e.target.dataset.id;
-          const solicitacaoRef = db.ref('solicitacoesGrupos/' + id);
-
-          solicitacaoRef.once('value').then(snap => {
-            const dados = snap.val();
-            if(!dados) return alert('Solicitação não encontrada');
-
-            // Criar novo grupo
-            const novoGrupoRef = db.ref('grupos').push();
-            novoGrupoRef.set({
-              nome: dados.nome
-            }).then(() => {
-              // Remover solicitação
-              solicitacaoRef.remove();
-              alert('Grupo criado e solicitação removida');
-            });
-          });
-        };
-      });
-
-      // Rejeitar solicitação
-      document.querySelectorAll('.btnRejeitar').forEach(btn => {
-        btn.onclick = e => {
-          const id = e.target.dataset.id;
-          db.ref('solicitacoesGrupos/' + id).remove().then(() => {
-            alert('Solicitação rejeitada e removida');
-          });
-        };
-      });
-
-    });
-  }
-
-</script>
-
-</body>
-</html>
+      //
