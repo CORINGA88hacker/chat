@@ -44,6 +44,7 @@
   th, td {
     padding: 10px;
     text-align: center;
+    vertical-align: middle;
   }
   th {
     background: #1abc9c;
@@ -72,10 +73,15 @@
     border-radius: 50%;
     object-fit: cover;
   }
+  input.uploadFotoInput {
+    margin-top: 6px;
+    width: 100%;
+  }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
@@ -94,10 +100,11 @@
           <th>Banir/Desbanir</th>
           <th>Alterar Foto URL</th>
           <th>Alterar Nome</th>
+          <th>Upload Nova Foto</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td colspan="6">Carregando usuários...</td></tr>
+        <tr><td colspan="7">Carregando usuários...</td></tr>
       </tbody>
     </table>
   </section>
@@ -151,6 +158,7 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const storage = firebase.storage();
 
   const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
   const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
@@ -162,7 +170,7 @@
       const users = snapshot.val() || {};
       tabelaUsuariosBody.innerHTML = '';
       if(Object.keys(users).length === 0){
-        tabelaUsuariosBody.innerHTML = '<tr><td colspan="6">Nenhum usuário encontrado.</td></tr>';
+        tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Nenhum usuário encontrado.</td></tr>';
         return;
       }
 
@@ -173,12 +181,18 @@
         const tr = document.createElement('tr');
 
         tr.innerHTML = `
-          <td><img src="${user.fotoPerfil || 'https://via.placeholder.com/50'}" class="fotoUser" /></td>
+          <td>
+            <img src="${user.fotoPerfil || 'https://via.placeholder.com/50'}" class="fotoUser" />
+          </td>
           <td>${uid}</td>
           <td><input type="text" value="${user.nome || ''}" data-uid="${uid}" class="nomeUsuarioInput" /></td>
           <td><button data-uid="${uid}" class="btnBanir">${banido ? 'Desbanir' : 'Banir'}</button></td>
           <td><input type="text" value="${user.fotoPerfil || ''}" data-uid="${uid}" class="fotoUsuarioInput" /></td>
           <td><button data-uid="${uid}" class="btnAlterar">Alterar</button></td>
+          <td>
+            <input type="file" accept="image/*" data-uid="${uid}" class="uploadFotoInput" />
+            <button data-uid="${uid}" class="btnUploadFoto">Enviar Foto</button>
+          </td>
         `;
 
         tabelaUsuariosBody.appendChild(tr);
@@ -197,7 +211,7 @@
         };
       });
 
-      // Evento alterar nome/foto
+      // Evento alterar nome/foto via input
       document.querySelectorAll('.btnAlterar').forEach(btn => {
         btn.onclick = e => {
           const uid = e.target.dataset.uid;
@@ -216,6 +230,33 @@
           }).then(() => {
             alert('Dados atualizados');
           });
+        };
+      });
+
+      // Evento upload de foto via Storage
+      document.querySelectorAll('.btnUploadFoto').forEach(btn => {
+        btn.onclick = async e => {
+          const uid = e.target.dataset.uid;
+          const tr = e.target.closest('tr');
+          const inputFile = tr.querySelector('.uploadFotoInput');
+          const file = inputFile.files[0];
+          if (!file) {
+            alert('Selecione uma imagem para enviar');
+            return;
+          }
+
+          try {
+            const storageRef = storage.ref(`usuariosFotos/${uid}_${Date.now()}.jpg`);
+            const snapshot = await storageRef.put(file);
+            const url = await snapshot.ref.getDownloadURL();
+
+            await db.ref(`usuarios/${uid}`).update({ fotoPerfil: url });
+            alert('Foto atualizada com sucesso!');
+
+            inputFile.value = '';
+          } catch (error) {
+            alert('Erro ao enviar imagem: ' + error.message);
+          }
         };
       });
 
