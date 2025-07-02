@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat Fullscreen com Grupos e Pesquisa</title>
+
+<style>
+  body, html {
+    margin:0; padding:0;
+    height:100%;
+    font-family: Arial, sans-serif;
+    background:#f4f7f9;
+    overflow: hidden; /* Evita scroll da página */
+  }
+
+  #btnOpenChat {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1abc9c;
+    color: white;
+    border:none;
+    padding: 15px 20px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    z-index: 1001;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  #btnOpenChat:hover {
+    background: #16a085;
+  }
+
+  /* Dialogo fullscreen */
+  #chatDialog {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    display: none;
+    flex-direction: row;
+    z-index: 1000;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Sidebar grupos */
+  #sidebar {
+    width: 280px;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    background: #f7f9fa;
+  }
+
+  #searchGrupos {
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  #listaGrupos {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  #listaGrupos button {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  #listaGrupos button:hover, #listaGrupos button.active {
+    background: #1abc9c;
+    color: white;
+  }
+
+  /* Área do chat */
+  #chatArea {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #headerChat {
+    padding: 15px 20px;
+    background: #1abc9c;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #btnCloseChat {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  #searchMsgs {
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  #chatMessages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #fefefe;
+  }
+
+  .msg {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+  }
+  .msg .fotoUser {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
+  }
+  .msg .msgContent {
+    background: #1abc9c;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 75%;
+    word-wrap: break-word;
+  }
+  .msg.me .msgContent {
+    background: #16a085;
+  }
+
+  #inputMsgContainer {
+    padding: 10px 15px;
+    border-top: 1px solid #ddd;
+    display: flex;
+  }
+
+  #inputMsg {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+  }
+
+  #btnSendMsg {
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 0 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #btnSendMsg:hover {
+    background: #16a085;
+  }
+
+  /* Scrollbar personalizado */
+  #listaGrupos::-webkit-scrollbar, #chatMessages::-webkit-scrollbar {
+    width: 8px;
+  }
+  #listaGrupos::-webkit-scrollbar-thumb, #chatMessages::-webkit-scrollbar-thumb {
+    background: #1abc9c;
+    border-radius: 4px;
+  }
+</style>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+</head>
+<body>
+
+<button id="btnOpenChat" title="Abrir Chat">💬 Chat</button>
+
+<div id="chatDialog" role="dialog" aria-modal="true" aria-labelledby="headerChatTitle">
+  <div id="sidebar">
+    <input type="text" id="searchGrupos" placeholder="Buscar grupos..." autocomplete="off" />
+    <div id="listaGrupos">
+      <!-- grupos aparecerão aqui -->
+    </div>
+  </div>
+
+  <div id="chatArea">
+    <div id="headerChat">
+      <span id="headerChatTitle">Selecione um grupo</span>
+      <button id="btnCloseChat" aria-label="Fechar chat">&times;</button>
+    </div>
+    <input type="text" id="searchMsgs" placeholder="Buscar mensagens..." autocomplete="off" disabled />
+    <div id="chatMessages">
+      <!-- mensagens aqui -->
+    </div>
+    <div id="inputMsgContainer">
+      <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." autocomplete="off" disabled />
+      <button id="btnSendMsg" disabled>Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Config Firebase (substitua com a sua config se quiser)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  // Elementos
+  const btnOpenChat = document.getElementById('btnOpenChat');
+  const chatDialog = document.getElementById('chatDialog');
+  const btnCloseChat = document.getElementById('btnCloseChat');
+
+  const searchGrupos = document.getElementById('searchGrupos');
+  const listaGrupos = document.getElementById('listaGrupos');
+
+  const headerChatTitle = document.getElementById('headerChatTitle');
+  const searchMsgs = document.getElementById('searchMsgs');
+  const chatMessages = document.getElementById('chatMessages');
+  const inputMsg = document.getElementById('inputMsg');
+  const btnSendMsg = document.getElementById('btnSendMsg');
+
+  let gruposData = {};
+  let mensagensData = {};
+  let grupoSelecionadoId = null;
+
+  // Abrir/fechar chat
+  btnOpenChat.onclick = () => {
+    chatDialog.style.display = 'flex';
+  };
+  btnCloseChat.onclick = () => {
+    chatDialog.style.display = 'none';
+    limparChat();
+  };
+
+  // Carregar grupos
+  function carregarGrupos() {
+    db.ref('grupos').on('value', snapshot => {
+      gruposData = snapshot.val() || {};
+      mostrarGrupos();
+    });
+  }
+
+  function mostrarGrupos(filtro = '') {
+    const filtroLower = filtro.toLowerCase();
+    listaGrupos.innerHTML = '';
+    const ids = Object.keys(gruposData);
+    const filtrados = ids.filter(id => gruposData[id].nome.toLowerCase().includes(filtroLower));
+    if (filtrados.length === 0) {
+      listaGrupos.innerHTML = '<p style="padding:10px;color:#666;">Nenhum grupo encontrado.</p>';
+      return;
+    }
+    filtrados.forEach(id => {
+      const btn = document.createElement('button');
+      btn.textContent = gruposData[id].nome;
+      btn.dataset.id = id;
+      if (id === grupoSelecionadoId) btn.classList.add('active');
+      btn.onclick = () => selecionarGrupo(id);
+      listaGrupos.appendChild(btn);
+    });
+  }
+
+  searchGrupos.addEventListener('input', () => {
+    mostrarGrupos(searchGrupos.value);
+  });
+
+  // Selecionar grupo
+  function selecionarGrupo(id) {
+    grupoSelecionadoId = id;
+    headerChatTitle.textContent = gruposData[id].nome;
+    searchMsgs.disabled = false;
+    inputMsg.disabled = false;
+    btnSendMsg.disabled = false;
+    mostrarGrupos(searchGrupos.value);
+
+    carregarMensagensGrupo(id);
+  }
+
+  // Carregar mensagens do grupo
+  function carregarMensagensGrupo(grupoId) {
+    if (!grupoId) return;
+
+    // Limpar listener antigo se houver
+    if (window.mensagensListener) {
+      db.ref('mensagens').off('value', window.mensagensListener);
+    }
+
+    window.mensagensListener = db.ref('mensagens').orderByChild('grupoId').equalTo(grupoId).limitToLast(100).on('value', snapshot => {
+      mensagensData = snapshot.val() || {};
+      mostrarMensagens(searchMsgs.value);
+    });
+  }
+
+  // Mostrar mensagens com filtro opcional
+  function mostrarMensagens(filtro = '') {
+    const filtroLower = filtro.toLowerCase();
+    chatMessages.innerHTML = '';
+
+    const mensagensArray = Object.entries(mensagensData)
+      .map(([key, val]) => ({ id: key, ...val }))
+      .filter(m => m.texto.toLowerCase().includes(filtroLower))
+      .sort((a,b) => a.timestamp - b.timestamp);
+
+    if (mensagensArray.length === 0) {
+      chatMessages.innerHTML = '<p style="color:#666;text-align:center;margin-top:20px;">Nenhuma mensagem encontrada.</p>';
+      return;
+    }
+
+    mensagensArray.forEach(m => {
+      const div = document.createElement('div');
+      div.classList.add('msg');
+      if (auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
+
+      div.innerHTML = `
+        <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" />
+        <div class="msgContent">${escapeHtml(m.texto)}</div>
+      `;
+      chatMessages.appendChild(div);
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  searchMsgs.addEventListener('input', () => {
+    mostrarMensagens(searchMsgs.value);
+  });
+
+  // Enviar mensagem
+  btnSendMsg.onclick = () => enviarMensagem();
+  inputMsg.addEventListener('keydown', e => {
+    if(e.key === 'Enter') enviarMensagem();
+  });
+
+  function enviarMensagem() {
+    const texto = inputMsg.value.trim();
+    if (!texto || !grupoSelecionadoId) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Faça login para enviar mensagens');
+      return;
+    }
+
+    // Verifica se banido
+    db.ref('usuarios/' + user.uid).once('value').then(snap => {
+      if (snap.exists() && snap.val().banido) {
+        alert('Você está banido e não pode enviar mensagens.');
+        return;
+      }
+
+      const novaMsgRef = db.ref('mensagens').push();
+      novaMsgRef.set({
+        uid: user.uid,
+        nome: user.displayName || '',
+        fotoPerfil: user.photoURL || '',
+        texto: texto,
+        timestamp: Date.now(),
+        grupoId: grupoSelecionadoId
+      });
+
+      inputMsg.value = '';
+    });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.innerText = text;
+    return div.innerHTML;
+  }
+
+  function limparChat() {
+    grupoSelecionadoId = null;
+    headerChatTitle.textContent = 'Selecione um grupo';
+    chatMessages.innerHTML = '';
+    searchMsgs.value = '';
+    inputMsg.value = '';
+    searchMsgs.disabled = true;
+    inputMsg.disabled = true;
+    btnSendMsg.disabled = true;
+    mostrarGrupos();
+    if (window.mensagensListener) {
+      db.ref('mensagens').off('value', window.mensagensListener);
+      window.mensagensListener = null;
+    }
+  }
+
+  // Você pode colocar sua lógica de login aqui. Por enquanto, só iniciar os grupos
+  auth.onAuthStateChanged(user => {
+    if(user){
+      carregarGrupos();
+    } else {
+      limparChat();
+    }
+  });
+
+</script>
+
+</body>
+</html>
