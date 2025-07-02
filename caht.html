@@ -3,227 +3,67 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat com Login Firebase + Admin</title>
+<title>Chat Manual Firebase + Privacidade</title>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin:0; padding:0;
-    background:#f4f7f9;
-  }
-  #loginSection, #chatSection, #adminSection {
-    max-width: 900px;
-    margin: 20px auto;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
-    padding: 20px;
-  }
-  #loginSection {text-align:center;}
-  button {
-    background:#1abc9c;
-    border:none;
-    color:white;
-    padding:10px 18px;
-    border-radius:5px;
-    cursor:pointer;
-    font-weight:bold;
-    margin-top:10px;
-  }
-  button:hover {background:#16a085;}
-  #userInfo {
-    margin-top:15px;
-  }
-  #userInfo img {
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    vertical-align: middle;
-    margin-right: 10px;
-  }
-  #chatMessages {
-    height: 400px;
-    border: 1px solid #ddd;
-    overflow-y: auto;
-    padding: 10px;
-    background: #fefefe;
-    margin-bottom: 10px;
-    border-radius: 6px;
-  }
-  .msg {
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-  }
-  .msg .fotoUser {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 8px;
-    object-fit: cover;
-  }
-  .msg .msgContent {
-    background: #1abc9c;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 12px;
-    max-width: 75%;
-    word-wrap: break-word;
-  }
-  .msg.me .msgContent {
-    background: #16a085;
-  }
-  #inputMsg {
-    width: calc(100% - 100px);
-    padding: 8px;
-    font-size: 1rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-  #btnSendMsg {
-    width: 80px;
-  }
-  #btnLogout {
-    background: #e74c3c;
-    margin-left: 10px;
-  }
-  /* Admin Collapsible */
-  #adminToggle {
-    background:#2980b9;
-    margin:20px auto;
-    display:block;
-    color:white;
-    font-weight:bold;
-    border-radius:5px;
-    padding:10px 0;
-    width: 150px;
-    cursor:pointer;
-  }
-  #adminSection {
-    display:none;
-  }
-  /* Admin table style */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  th, td {
-    border:1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-  }
-  th {
-    background: #1abc9c;
-    color: white;
-  }
-  input[type="text"], input[type="file"] {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 5px;
-  }
-  .fotoUserAdmin {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
+  body { font-family: Arial,sans-serif; margin:0; padding:0; background:#f0f0f0; }
+  #loginForm, #chatApp, #adminPanel { max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; }
+  #chatApp, #adminPanel { display:none; }
+  input, button { padding:10px; margin:5px 0; width: 100%; box-sizing: border-box; }
+  button { background:#1abc9c; color:white; border:none; cursor:pointer; border-radius:5px; }
+  button:hover { background:#16a085; }
+  #mensagens { height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; background:#fafafa; margin-bottom:10px; }
+  .msg { margin-bottom:10px; }
+  .msg.me { text-align:right; }
+  .msg .nome { font-weight:bold; }
+  .user-list, .group-list { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; margin-bottom: 10px; }
+  .user-list div, .group-list div { padding: 5px; cursor: pointer; border-bottom: 1px solid #ddd; }
+  .user-list div:hover, .group-list div:hover { background: #1abc9c; color: white; }
 </style>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 </head>
 <body>
 
-<!-- Login -->
-<section id="loginSection">
-  <h1>Entrar no Chat</h1>
-  <button id="btnLoginGoogle">Entrar com Google</button>
-  <button id="btnLogout" style="display:none;">Sair</button>
+<div id="loginForm">
+  <h2>Cadastro / Login</h2>
+  <input type="email" id="email" placeholder="Seu email edu.mt.gov.br" />
+  <input type="password" id="senha" placeholder="Senha" />
+  <input type="text" id="nome" placeholder="Seu nome" />
+  <input type="text" id="fotoPerfil" placeholder="URL da foto de perfil (opcional)" />
+  <button id="btnCadastrar">Cadastrar</button>
+  <button id="btnLogin">Entrar</button>
+  <p id="msgErro" style="color:red;"></p>
+</div>
 
-  <div id="userInfo" style="display:none;">
-    <img id="userFoto" alt="Foto do usuário"/>
-    <span id="userNome"></span>
-  </div>
-</section>
-
-<!-- Chat -->
-<section id="chatSection" style="display:none;">
+<div id="chatApp">
   <h2>Chat</h2>
-  <div id="chatMessages"></div>
-  <input id="inputMsg" type="text" placeholder="Digite sua mensagem..." />
-  <button id="btnSendMsg">Enviar</button>
-</section>
+  <button id="btnLogout">Sair</button>
 
-<!-- Botão para mostrar/ocultar admin -->
-<button id="adminToggle">Mostrar Admin</button>
+  <h3>Usuários disponíveis</h3>
+  <div class="user-list" id="listaUsuarios"></div>
 
-<!-- Admin -->
-<section id="adminSection">
+  <h3>Grupos disponíveis</h3>
+  <div class="group-list" id="listaGrupos"></div>
 
-  <h2>Painel Admin</h2>
+  <h3>Conversa: <span id="nomeConversa">Nenhuma</span></h3>
+  <div id="mensagens"></div>
+  <input type="text" id="inputMsg" placeholder="Digite sua mensagem..." />
+  <button id="btnEnviarMsg">Enviar</button>
+</div>
 
-  <section id="usuariosSection">
-    <h3>Usuários</h3>
-    <table id="tabelaUsuarios">
-      <thead>
-        <tr>
-          <th>Foto</th>
-          <th>UID</th>
-          <th>Nome</th>
-          <th>Banir/Desbanir</th>
-          <th>Alterar Foto URL</th>
-          <th>Alterar Nome</th>
-          <th>Upload Nova Foto</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="7">Carregando usuários...</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="gruposSection">
-    <h3>Grupos</h3>
-    <table id="tabelaGrupos">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nome do Grupo</th>
-          <th>Alterar Nome</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="3">Carregando grupos...</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="solicitacoesSection">
-    <h3>Solicitações de Novos Grupos</h3>
-    <table id="tabelaSolicitacoes">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nome Solicitado</th>
-          <th>Solicitante (UID)</th>
-          <th>Aprovar</th>
-          <th>Rejeitar</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="5">Carregando solicitações...</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-</section>
+<div id="adminPanel" style="max-width:600px; margin: 20px auto;">
+  <h2>Admin (sem login)</h2>
+  <button id="btnAtualizarUsuarios">Atualizar usuários</button>
+  <button id="btnAtualizarGrupos">Atualizar grupos</button>
+  <div id="adminUsuarios"></div>
+  <div id="adminGrupos"></div>
+</div>
 
 <script>
-  // Config Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -237,365 +77,306 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
-  const storage = firebase.storage();
 
-  // Elementos
-  const btnLoginGoogle = document.getElementById('btnLoginGoogle');
-  const btnLogout = document.getElementById('btnLogout');
-  const userInfo = document.getElementById('userInfo');
-  const userFoto = document.getElementById('userFoto');
-  const userNome = document.getElementById('userNome');
+  // Elementos DOM
+  const loginForm = document.getElementById('loginForm');
+  const chatApp = document.getElementById('chatApp');
+  const adminPanel = document.getElementById('adminPanel');
+  const emailInput = document.getElementById('email');
+  const senhaInput = document.getElementById('senha');
+  const nomeInput = document.getElementById('nome');
+  const fotoPerfilInput = document.getElementById('fotoPerfil');
+  const btnCadastrar = document.getElementById('btnCadastrar');
+  const btnLogin = document.getElementById('btnLogin');
+  const msgErro = document.getElementById('msgErro');
 
-  const loginSection = document.getElementById('loginSection');
-  const chatSection = document.getElementById('chatSection');
-
-  const chatMessages = document.getElementById('chatMessages');
+  const listaUsuariosDiv = document.getElementById('listaUsuarios');
+  const listaGruposDiv = document.getElementById('listaGrupos');
+  const nomeConversaSpan = document.getElementById('nomeConversa');
+  const mensagensDiv = document.getElementById('mensagens');
   const inputMsg = document.getElementById('inputMsg');
-  const btnSendMsg = document.getElementById('btnSendMsg');
+  const btnEnviarMsg = document.getElementById('btnEnviarMsg');
+  const btnLogout = document.getElementById('btnLogout');
 
-  const adminToggle = document.getElementById('adminToggle');
-  const adminSection = document.getElementById('adminSection');
+  let usuarioAtual = null;
+  let chatAtual = null; // pode ser {tipo:'privado', id:'uid1_uid2'} ou {tipo:'grupo', id:'grupoId'}
 
-  // Login Google
-  btnLoginGoogle.onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(e => alert('Erro no login: '+e.message));
+  // Validação de email edu.mt.gov.br
+  function validarEmailEdu(email){
+    return /^.+@edu\.mt\.gov\.br$/.test(email);
+  }
+
+  // Criar usuário manual
+  btnCadastrar.onclick = () => {
+    const email = emailInput.value.trim();
+    const senha = senhaInput.value.trim();
+    const nome = nomeInput.value.trim();
+    const fotoPerfil = fotoPerfilInput.value.trim() || 'https://i.pravatar.cc/150?img=5';
+
+    msgErro.textContent = '';
+
+    if(!validarEmailEdu(email)){
+      msgErro.textContent = 'Use um email edu.mt.gov.br válido';
+      return;
+    }
+    if(senha.length < 6){
+      msgErro.textContent = 'Senha deve ter ao menos 6 caracteres';
+      return;
+    }
+    if(nome.length < 2){
+      msgErro.textContent = 'Informe seu nome';
+      return;
+    }
+
+    auth.createUserWithEmailAndPassword(email, senha)
+      .then(cred => {
+        // Salvar dados do usuário no db
+        usuarioAtual = {
+          uid: cred.user.uid,
+          nome,
+          fotoPerfil
+        };
+        db.ref('usuarios/' + usuarioAtual.uid).set(usuarioAtual);
+      })
+      .catch(err => {
+        msgErro.textContent = err.message;
+      });
   };
 
+  // Login
+  btnLogin.onclick = () => {
+    const email = emailInput.value.trim();
+    const senha = senhaInput.value.trim();
+    msgErro.textContent = '';
+    if(!validarEmailEdu(email)){
+      msgErro.textContent = 'Use um email edu.mt.gov.br válido';
+      return;
+    }
+    if(senha.length < 6){
+      msgErro.textContent = 'Senha inválida';
+      return;
+    }
+
+    auth.signInWithEmailAndPassword(email, senha)
+      .catch(err => {
+        msgErro.textContent = err.message;
+      });
+  };
+
+  // Logout
   btnLogout.onclick = () => {
     auth.signOut();
   };
 
-  // Controla exibição admin
-  adminToggle.onclick = () => {
-    if(adminSection.style.display === 'none'){
-      adminSection.style.display = 'block';
-      adminToggle.textContent = 'Ocultar Admin';
-    } else {
-      adminSection.style.display = 'none';
-      adminToggle.textContent = 'Mostrar Admin';
-    }
-  };
-
-  // Ao mudar usuário logado
+  // Atualiza interface quando o usuário loga ou desloga
   auth.onAuthStateChanged(user => {
     if(user){
-      if(user.emailVerified === false) {
-        alert('Por favor, verifique seu email para continuar.');
-        auth.signOut();
-        return;
-      }
-
-      // Mostra dados
-      loginSection.style.display = 'none';
-      chatSection.style.display = 'block';
-      btnLogout.style.display = 'inline-block';
-      userInfo.style.display = 'inline-flex';
-
-      userFoto.src = user.photoURL || 'https://via.placeholder.com/70';
-      userNome.textContent = user.displayName || user.email || 'Usuário';
-
-      // Cria no DB se não existir
+      // Carregar dados do usuário no db
       db.ref('usuarios/' + user.uid).once('value').then(snap => {
-        if(!snap.exists()){
-          db.ref('usuarios/' + user.uid).set({
-            nome: user.displayName || '',
-            email: user.email || '',
-            fotoPerfil: user.photoURL || '',
-            banido: false
-          });
+        usuarioAtual = snap.val();
+        if(!usuarioAtual){
+          // Caso usuário não exista no db, criar com dados padrão
+          usuarioAtual = {
+            uid: user.uid,
+            nome: user.email.split('@')[0],
+            fotoPerfil: 'https://i.pravatar.cc/150?img=5'
+          };
+          db.ref('usuarios/' + user.uid).set(usuarioAtual);
         }
+        loginForm.style.display = 'none';
+        chatApp.style.display = 'block';
+        adminPanel.style.display = 'block'; // Mostrar admin sem login por enquanto
+
+        carregarUsuarios();
+        carregarGrupos();
+        limparChat();
       });
-
-      // Carrega chat
-      carregarMensagens();
-
-      // Carrega admin só pra quem for admin (pode ajustar isso)
-      carregarUsuarios();
-      carregarGrupos();
-      carregarSolicitacoes();
-
     } else {
-      loginSection.style.display = 'block';
-      chatSection.style.display = 'none';
-      btnLogout.style.display = 'none';
-      userInfo.style.display = 'none';
-      chatMessages.innerHTML = '';
-      tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Faça login para ver usuários</td></tr>';
-      tabelaGruposBody.innerHTML = '<tr><td colspan="3">Faça login para ver grupos</td></tr>';
-      tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Faça login para ver solicitações</td></tr>';
+      usuarioAtual = null;
+      loginForm.style.display = 'block';
+      chatApp.style.display = 'none';
+      adminPanel.style.display = 'none';
     }
   });
 
-  // Enviar mensagem
-  btnSendMsg.onclick = () => {
-    enviarMensagem();
-  };
-  inputMsg.addEventListener('keydown', e => {
-    if(e.key === 'Enter') enviarMensagem();
-  });
-
-  function enviarMensagem(){
-    const texto = inputMsg.value.trim();
-    if(texto === '') return;
-
-    const user = auth.currentUser;
-    if(!user) return alert('Faça login para enviar mensagens');
-
-    // Verifica se banido
-    db.ref('usuarios/' + user.uid).once('value').then(snap => {
-      if(snap.exists() && snap.val().banido){
-        alert('Você está banido e não pode enviar mensagens.');
-        return;
-      }
-
-      // Salva mensagem
-      const msgRef = db.ref('mensagens').push();
-      msgRef.set({
-        uid: user.uid,
-        nome: user.displayName || '',
-        fotoPerfil: user.photoURL || '',
-        texto: texto,
-        timestamp: Date.now()
-      });
-      inputMsg.value = '';
-    });
-  }
-
-  // Mostrar mensagens
-  function carregarMensagens(){
-    db.ref('mensagens').limitToLast(50).on('value', snapshot => {
-      const msgs = snapshot.val() || {};
-      chatMessages.innerHTML = '';
-      for(const key in msgs){
-        const m = msgs[key];
+  // Carregar lista de usuários (exceto o atual)
+  function carregarUsuarios(){
+    db.ref('usuarios').on('value', snap => {
+      const usuarios = snap.val() || {};
+      listaUsuariosDiv.innerHTML = '';
+      Object.keys(usuarios).forEach(uid => {
+        if(uid === usuarioAtual.uid) return; // pula o atual
+        const u = usuarios[uid];
         const div = document.createElement('div');
-        div.classList.add('msg');
-        if(auth.currentUser && auth.currentUser.uid === m.uid) div.classList.add('me');
+        div.textContent = u.nome;
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
 
-        div.innerHTML = `
-          <img src="${m.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUser" />
-          <div class="msgContent">${escapeHtml(m.texto)}</div>
-        `;
-        chatMessages.appendChild(div);
-      }
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+        const img = document.createElement('img');
+        img.src = u.fotoPerfil || 'https://i.pravatar.cc/150?img=5';
+        img.style.width = '30px';
+        img.style.height = '30px';
+        img.style.borderRadius = '50%';
+
+        div.prepend(img);
+        div.onclick = () => abrirChatPrivado(uid, u.nome);
+        listaUsuariosDiv.appendChild(div);
+      });
     });
   }
 
-  // Escape HTML para segurança básica
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.innerText = text;
-    return div.innerHTML;
-  }
-
-  /* ------------------ Admin --------------------- */
-
-  const tabelaUsuariosBody = document.querySelector('#tabelaUsuarios tbody');
-  const tabelaGruposBody = document.querySelector('#tabelaGrupos tbody');
-  const tabelaSolicitacoesBody = document.querySelector('#tabelaSolicitacoes tbody');
-
-  // Carrega usuários
-  function carregarUsuarios() {
-    db.ref('usuarios').on('value', snapshot => {
-      const users = snapshot.val() || {};
-      tabelaUsuariosBody.innerHTML = '';
-      if(Object.keys(users).length === 0){
-        tabelaUsuariosBody.innerHTML = '<tr><td colspan="7">Nenhum usuário encontrado.</td></tr>';
-        return;
-      }
-
-      for (const uid in users) {
-        const user = users[uid];
-        const banido = user.banido || false;
-
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-          <td><img src="${user.fotoPerfil || 'https://via.placeholder.com/40'}" class="fotoUserAdmin" /></td>
-          <td>${uid}</td>
-          <td><input type="text" value="${user.nome || ''}" data-uid="${uid}" class="nomeUsuarioInput" /></td>
-          <td><button data-uid="${uid}" class="btnBanir">${banido ? 'Desbanir' : 'Banir'}</button></td>
-          <td><input type="text" value="${user.fotoPerfil || ''}" data-uid="${uid}" class="fotoUsuarioInput" /></td>
-          <td><button data-uid="${uid}" class="btnAlterar">Alterar</button></td>
-          <td>
-            <input type="file" accept="image/*" data-uid="${uid}" class="uploadFotoInput" />
-            <button data-uid="${uid}" class="btnUploadFoto">Enviar Foto</button>
-          </td>
-        `;
-
-        tabelaUsuariosBody.appendChild(tr);
-      }
-
-      // Botões banir/desbanir
-      document.querySelectorAll('.btnBanir').forEach(btn => {
-        btn.onclick = e => {
-          const uid = e.target.dataset.uid;
-          const userRef = db.ref('usuarios/' + uid);
-          userRef.once('value').then(snap => {
-            const data = snap.val() || {};
-            const novoStatus = !(data.banido || false);
-            userRef.update({ banido: novoStatus });
-          });
-        };
+  // Carregar grupos que o usuário participa
+  function carregarGrupos(){
+    db.ref('grupos').on('value', snap => {
+      const grupos = snap.val() || {};
+      listaGruposDiv.innerHTML = '';
+      Object.keys(grupos).forEach(grupoId => {
+        const g = grupos[grupoId];
+        // Só mostra grupos onde o usuário é membro
+        if(g.membros && g.membros[usuarioAtual.uid]){
+          const div = document.createElement('div');
+          div.textContent = g.nome;
+          div.style.cursor = 'pointer';
+          div.onclick = () => abrirChatGrupo(grupoId, g.nome);
+          listaGruposDiv.appendChild(div);
+        }
       });
-
-      // Botão alterar nome e foto via input
-      document.querySelectorAll('.btnAlterar').forEach(btn => {
-        btn.onclick = e => {
-          const uid = e.target.dataset.uid;
-          const tr = e.target.closest('tr');
-          const novoNome = tr.querySelector('.nomeUsuarioInput').value.trim();
-          const novaFoto = tr.querySelector('.fotoUsuarioInput').value.trim();
-
-          if (novoNome === '') {
-            alert('Nome não pode ser vazio');
-            return;
-          }
-
-          db.ref('usuarios/' + uid).update({
-            nome: novoNome,
-            fotoPerfil: novaFoto
-          }).then(() => {
-            alert('Dados atualizados');
-          });
-        };
-      });
-
-      // Upload foto para Storage e atualizar DB
-      document.querySelectorAll('.btnUploadFoto').forEach(btn => {
-        btn.onclick = async e => {
-          const uid = e.target.dataset.uid;
-          const tr = e.target.closest('tr');
-          const inputFile = tr.querySelector('.uploadFotoInput');
-          const file = inputFile.files[0];
-          if (!file) {
-            alert('Selecione uma imagem para enviar');
-            return;
-          }
-
-          try {
-            const storageRef = storage.ref(`usuariosFotos/${uid}_${Date.now()}.jpg`);
-            const snapshot = await storageRef.put(file);
-            const url = await snapshot.ref.getDownloadURL();
-
-            await db.ref(`usuarios/${uid}`).update({ fotoPerfil: url });
-            alert('Foto atualizada com sucesso!');
-
-            inputFile.value = '';
-          } catch (error) {
-            alert('Erro ao enviar imagem: ' + error.message);
-          }
-        };
-      });
-
     });
   }
 
-  // Carrega grupos
-  function carregarGrupos() {
-    db.ref('grupos').on('value', snapshot => {
-      const grupos = snapshot.val() || {};
-      tabelaGruposBody.innerHTML = '';
-      if(Object.keys(grupos).length === 0){
-        tabelaGruposBody.innerHTML = '<tr><td colspan="3">Nenhum grupo encontrado.</td></tr>';
-        return;
-      }
+  // Abrir chat privado
+  function abrirChatPrivado(uidOutro, nomeOutro){
+    chatAtual = { tipo: 'privado', id: gerarIdChatPrivado(usuarioAtual.uid, uidOutro) };
+    nomeConversaSpan.textContent = 'Chat com ' + nomeOutro;
+    carregarMensagens();
+  }
 
-      for (const grupoId in grupos) {
-        const grupo = grupos[grupoId];
-        const tr = document.createElement('tr');
+  // Abrir chat grupo
+  function abrirChatGrupo(grupoId, nomeGrupo){
+    chatAtual = { tipo: 'grupo', id: grupoId };
+    nomeConversaSpan.textContent = 'Grupo: ' + nomeGrupo;
+    carregarMensagens();
+  }
 
-        tr.innerHTML = `
-          <td>${grupoId}</td>
-          <td><input type="text" value="${grupo.nome || ''}" data-id="${grupoId}" class="nomeGrupoInput" /></td>
-          <td><button data-id="${grupoId}" class="btnAlterarGrupo">Alterar Nome</button></td>
-        `;
+  // Gerar id único do chat privado entre dois usuários
+  function gerarIdChatPrivado(uid1, uid2){
+    return [uid1, uid2].sort().join('_');
+  }
 
-        tabelaGruposBody.appendChild(tr);
-      }
+  let mensagensListener = null;
 
-      // Alterar nome grupo
-      document.querySelectorAll('.btnAlterarGrupo').forEach(btn => {
-        btn.onclick = e => {
-          const grupoId = e.target.dataset.id;
-          const tr = e.target.closest('tr');
-          const novoNome = tr.querySelector('.nomeGrupoInput').value.trim();
+  // Carregar mensagens do chat atual
+  function carregarMensagens(){
+    if(mensagensListener) mensagensListener.off();
 
-          if (novoNome === '') {
-            alert('Nome do grupo não pode ser vazio');
-            return;
-          }
+    mensagensDiv.innerHTML = 'Carregando mensagens...';
 
-          db.ref('grupos/' + grupoId).update({ nome: novoNome })
-            .then(() => alert('Nome do grupo atualizado'));
-        };
+    let ref;
+    if(chatAtual.tipo === 'privado'){
+      ref = db.ref('chatsPrivados/' + chatAtual.id + '/mensagens');
+    } else {
+      ref = db.ref('grupos/' + chatAtual.id + '/mensagens');
+    }
+
+    mensagensListener = ref;
+    ref.off();
+    ref.on('value', snap => {
+      const msgs = snap.val() || {};
+      mensagensDiv.innerHTML = '';
+
+      // Carregar usuários para mostrar nome e foto
+      db.ref('usuarios').once('value').then(userSnap => {
+        const users = userSnap.val() || {};
+        for(const key in msgs){
+          const m = msgs[key];
+          const usuario = users[m.uid] || {};
+          const div = document.createElement('div');
+          div.className = 'msg ' + (m.uid === usuarioAtual.uid ? 'me' : '');
+          div.innerHTML = `<span class="nome">${usuario.nome || 'Usuário'}</span><br>${m.texto}`;
+          mensagensDiv.appendChild(div);
+        }
+        mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
       });
-
     });
   }
 
-  // Carrega solicitações grupos
-  function carregarSolicitacoes() {
-    db.ref('solicitacoesGrupos').on('value', snapshot => {
-      const solicitacoes = snapshot.val() || {};
-      tabelaSolicitacoesBody.innerHTML = '';
-      if(Object.keys(solicitacoes).length === 0){
-        tabelaSolicitacoesBody.innerHTML = '<tr><td colspan="5">Nenhuma solicitação pendente.</td></tr>';
-        return;
-      }
+  // Enviar mensagem
+  btnEnviarMsg.onclick = () => {
+    const texto = inputMsg.value.trim();
+    if(!texto) return;
+    if(!chatAtual) return alert('Selecione um chat');
 
-      for (const id in solicitacoes) {
-        const s = solicitacoes[id];
-        const tr = document.createElement('tr');
+    let ref;
+    if(chatAtual.tipo === 'privado'){
+      ref = db.ref('chatsPrivados/' + chatAtual.id + '/mensagens');
+    } else {
+      ref = db.ref('grupos/' + chatAtual.id + '/mensagens');
+    }
 
-        tr.innerHTML = `
-          <td>${id}</td>
-          <td>${s.nome}</td>
-          <td>${s.uidSolicitante}</td>
-          <td><button data-id="${id}" class="btnAprovar">Aprovar</button></td>
-          <td><button data-id="${id}" class="btnRejeitar">Rejeitar</button></td>
-        `;
+    const msg = {
+      uid: usuarioAtual.uid,
+      texto,
+      timestamp: Date.now()
+    };
 
-        tabelaSolicitacoesBody.appendChild(tr);
-      }
-
-      // Aprovar solicitação
-      document.querySelectorAll('.btnAprovar').forEach(btn => {
-        btn.onclick = e => {
-          const id = e.target.dataset.id;
-          const solicitacaoRef = db.ref('solicitacoesGrupos/' + id);
-
-          solicitacaoRef.once('value').then(snap => {
-            const dados = snap.val();
-            if(!dados) return alert('Solicitação não encontrada');
-
-            // Criar novo grupo
-            const novoGrupoRef = db.ref('grupos').push();
-            novoGrupoRef.set({
-              nome: dados.nome
-            }).then(() => {
-              // Remover solicitação
-              solicitacaoRef.remove();
-              alert('Grupo criado e solicitação removida');
-            });
-          });
-        };
-      });
-
-      // Rejeitar solicitação
-      document.querySelectorAll('.btnRejeitar').forEach(btn => {
-        btn.onclick = e => {
-          const id = e.target.dataset.id;
-          db.ref('solicitacoesGrupos/' + id).remove().then(() => {
-            alert('Solicitação rejeitada e removida');
-          });
-        };
-      });
-
+    ref.push(msg).then(() => {
+      inputMsg.value = '';
+      carregarMensagens();
     });
+  };
+
+  // Limpar chat
+  function limparChat(){
+    mensagensDiv.innerHTML = '';
+    nomeConversaSpan.textContent = 'Nenhuma';
+    chatAtual = null;
   }
+
+  // Admin básico só para atualizar usuários e grupos (sem login)
+  const btnAtualizarUsuarios = document.getElementById('btnAtualizarUsuarios');
+  const btnAtualizarGrupos = document.getElementById('btnAtualizarGrupos');
+  const adminUsuarios = document.getElementById('adminUsuarios');
+  const adminGrupos = document.getElementById('adminGrupos');
+
+  btnAtualizarUsuarios.onclick = () => {
+    db.ref('usuarios').once('value').then(snap => {
+      const users = snap.val() || {};
+      adminUsuarios.innerHTML = '<h3>Usuários</h3>';
+      for(const uid in users){
+        const u = users[uid];
+        const banido = u.banido || false;
+        adminUsuarios.innerHTML += `
+          <div>
+            <img src="${u.fotoPerfil || 'https://i.pravatar.cc/150?img=5'}" width="30" height="30" style="border-radius:50%; vertical-align:middle;" />
+            <b>${u.nome || uid}</b> - Banido: ${banido}
+            <button onclick="banirUsuario('${uid}', ${!banido})">${banido ? 'Desbanir' : 'Banir'}</button>
+          </div>
+        `;
+      }
+    });
+  };
+
+  btnAtualizarGrupos.onclick = () => {
+    db.ref('grupos').once('value').then(snap => {
+      const grupos = snap.val() || {};
+      adminGrupos.innerHTML = '<h3>Grupos</h3>';
+      for(const gid in grupos){
+        const g = grupos[gid];
+        adminGrupos.innerHTML += `
+          <div>
+            <b>${g.nome || gid}</b> - Membros: ${g.membros ? Object.keys(g.membros).length : 0}
+          </div>
+        `;
+      }
+    });
+  };
+
+  window.banirUsuario = function(uid, banir){
+    db.ref('usuarios/' + uid).update({ banido: banir });
+    alert(banir ? 'Usuário banido' : 'Usuário desbanido');
+    btnAtualizarUsuarios.click();
+  };
 
 </script>
 
