@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil do Usuário</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script defer src="firebase.js"></script>
+</head>
+<body>
+
+  <h1>👤 Perfil do Usuário</h1>
+  <div>
+    <button onclick="window.location.href='index.html'">🏠 Voltar ao Feed</button>
+  </div>
+  
+  <div id="user-info"></div>
+  <h2>📸 Publicações</h2>
+  <div id="posts"></div>
+
+  <script>
+    const postsDiv = document.getElementById('posts');
+    const userInfo = document.getElementById('user-info');
+
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    const uid = getQueryParam('uid');
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!uid && user) {
+        showUserInfo(user.uid, user.email);
+        loadUserPosts(user.uid);
+      } else if (uid) {
+        const userDoc = await db.collection('posts')
+          .where('userId', '==', uid).limit(1).get();
+
+        const email = userDoc.empty ? 'Usuário' : userDoc.docs[0].data().email;
+        showUserInfo(uid, email);
+        loadUserPosts(uid);
+      } else {
+        userInfo.innerHTML = "⚠️ Faça login primeiro.";
+      }
+    });
+
+    function showUserInfo(uid, email) {
+      userInfo.innerHTML = `
+        <p><b>UID:</b> ${uid}</p>
+        <p><b>Email:</b> ${email}</p>
+      `;
+    }
+
+    async function loadUserPosts(userId) {
+      const snapshot = await db.collection('posts')
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      postsDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const post = doc.data();
+        const postEl = document.createElement('div');
+        postEl.classList.add('post');
+        postEl.innerHTML = `
+          <img src="${post.photoURL}" alt="Foto" />
+          <p><b>${post.email}</b></p>
+        `;
+        postsDiv.appendChild(postEl);
+      });
+
+      if (snapshot.empty) {
+        postsDiv.innerHTML = '<p>Nenhum post ainda.</p>';
+      }
+    }
+  </script>
+</body>
+</html>
