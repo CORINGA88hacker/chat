@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat Tela Cheia com Menu Grupo</title>
+<title>Chat com Firebase e Grupos</title>
 
 <style>
-  /* Remove margens e preenche toda a tela */
   html, body {
     height: 100%;
     margin: 0;
@@ -14,15 +13,13 @@
     background: #f0f0f0;
   }
 
-  /* Container flex horizontal */
   #app {
     display: flex;
-    height: 100vh; /* altura da viewport inteira */
-    width: 100vw; /* largura total */
+    height: 100vh;
+    width: 100vw;
     overflow: hidden;
   }
 
-  /* Menu lateral grupos */
   #menuGrupos {
     width: 250px;
     background: #2c3e50;
@@ -60,7 +57,6 @@
     background: #1abc9c;
   }
 
-  /* Área de conversa */
   #areaChat {
     flex-grow: 1;
     background: white;
@@ -98,6 +94,7 @@
     padding: 8px 12px;
     border-radius: 8px;
     display: inline-block;
+    white-space: pre-wrap;
   }
 
   #inputArea {
@@ -132,15 +129,16 @@
   }
 </style>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 </head>
 <body>
 
 <div id="app">
   <div id="menuGrupos">
     <h2>Grupos</h2>
-    <div id="listaGrupos">
-      <!-- Grupos vão aparecer aqui -->
-    </div>
+    <div id="listaGrupos"></div>
   </div>
 
   <div id="areaChat">
@@ -154,7 +152,20 @@
 </div>
 
 <script>
-  // Exemplo simples de grupos
+  // Config do Firebase - use suas configs reais aqui
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+    authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
+    databaseURL: "https://projeto-deus-yato-928-sk-default-rtdb.firebaseio.com",
+    projectId: "projeto-deus-yato-928-sk",
+    storageBucket: "projeto-deus-yato-928-sk.appspot.com",
+    messagingSenderId: "790408726854",
+    appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
   const grupos = [
     { id: 'grupo1', nome: 'Grupo 1' },
     { id: 'grupo2', nome: 'Grupo 2' },
@@ -168,13 +179,8 @@
   const btnEnviar = document.getElementById('btnEnviar');
 
   let grupoSelecionado = null;
-  let mensagensPorGrupo = {
-    grupo1: [],
-    grupo2: [],
-    grupo3: []
-  };
+  let mensagensListener = null;
 
-  // Mostra os grupos
   function mostrarGrupos() {
     listaGruposDiv.innerHTML = '';
     grupos.forEach(g => {
@@ -186,45 +192,70 @@
     });
   }
 
-  // Seleciona grupo e mostra mensagens
   function selecionarGrupo(id) {
     grupoSelecionado = id;
     headerChat.textContent = grupos.find(g => g.id === id).nome;
 
-    // Atualiza seleção visual
     document.querySelectorAll('.grupoItem').forEach(el => {
       el.classList.toggle('selecionado', el.textContent === headerChat.textContent);
     });
 
-    mostrarMensagens();
     inputMsg.disabled = false;
     btnEnviar.disabled = false;
     inputMsg.focus();
+
+    carregarMensagensFirebase(id);
   }
 
-  // Mostra mensagens do grupo selecionado
-  function mostrarMensagens() {
-    mensagensDiv.innerHTML = '';
-    if (!grupoSelecionado) return;
-    mensagensPorGrupo[grupoSelecionado].forEach(msg => {
-      const div = document.createElement('div');
-      div.className = 'mensagem';
-      div.innerHTML = `<div class="nome">${msg.nome}</div><div class="texto">${msg.texto}</div>`;
-      mensagensDiv.appendChild(div);
+  // Carregar mensagens do Firebase e ouvir atualizações
+  function carregarMensagensFirebase(grupoId) {
+    mensagensDiv.innerHTML = 'Carregando mensagens...';
+
+    // Remove listener antigo
+    if (mensagensListener) {
+      mensagensListener.off();
+    }
+
+    const mensagensRef = db.ref('mensagens/' + grupoId);
+
+    mensagensListener = mensagensRef;
+    mensagensRef.off(); // limpa listeners antigos
+
+    mensagensRef.on('value', snapshot => {
+      const msgs = snapshot.val() || {};
+      mensagensDiv.innerHTML = '';
+      Object.keys(msgs).forEach(key => {
+        const msg = msgs[key];
+        adicionarMensagemNaTela(msg.nome, msg.texto);
+      });
+      mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
     });
-    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
   }
 
-  // Envia mensagem
+  // Adiciona mensagem no HTML
+  function adicionarMensagemNaTela(nome, texto) {
+    const div = document.createElement('div');
+    div.className = 'mensagem';
+    div.innerHTML = `<div class="nome">${nome}</div><div class="texto">${texto}</div>`;
+    mensagensDiv.appendChild(div);
+  }
+
+  // Envia mensagem para Firebase
   btnEnviar.onclick = () => {
     const texto = inputMsg.value.trim();
     if (!texto || !grupoSelecionado) return;
-    mensagensPorGrupo[grupoSelecionado].push({
-      nome: 'Você',
+
+    // Você pode substituir "Você" por nome do usuário real depois
+    const msg = {
+      nome: "Você",
       texto
+    };
+
+    const mensagensRef = db.ref('mensagens/' + grupoSelecionado);
+    mensagensRef.push(msg).then(() => {
+      inputMsg.value = '';
+      inputMsg.focus();
     });
-    inputMsg.value = '';
-    mostrarMensagens();
   };
 
   mostrarGrupos();
