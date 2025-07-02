@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel Admin Moderno</title>
+<title>Painel Admin Avançado</title>
 
 <style>
+  /* ... mesmíssimo CSS do admin bonito que te mandei ... */
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f7f9fc;
@@ -16,76 +17,18 @@
     min-height: 100vh;
     align-items: flex-start;
   }
-
   #painelAdmin {
     background: white;
     margin: 20px;
     padding: 30px 40px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
-    max-width: 600px;
+    max-width: 700px;
     width: 100%;
   }
+  /* reutilize o CSS do painel anterior */
 
-  #painelAdmin h2 {
-    font-weight: 700;
-    font-size: 28px;
-    margin-bottom: 24px;
-    color: #2c3e50;
-    border-bottom: 2px solid #1abc9c;
-    padding-bottom: 10px;
-  }
-
-  h3 {
-    color: #34495e;
-    margin-bottom: 12px;
-    font-weight: 600;
-    border-bottom: 1px solid #d1d9e6;
-    padding-bottom: 8px;
-  }
-
-  input[type="file"] {
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    width: 100%;
-    margin-bottom: 12px;
-  }
-
-  #btnUploadFoto {
-    background-color: #1abc9c;
-    border: none;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: 100%;
-    margin-bottom: 20px;
-  }
-
-  #btnUploadFoto:hover {
-    background-color: #16a085;
-  }
-
-  #msgUpload {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 20px;
-    min-height: 18px;
-  }
-
-  #listaUsuariosAdmin {
-    max-height: 380px;
-    overflow-y: auto;
-    border: 1px solid #d1d9e6;
-    border-radius: 10px;
-    padding: 12px;
-    background-color: #fafafa;
-  }
-
+  /* Usuário */
   #listaUsuariosAdmin > div {
     display: flex;
     align-items: center;
@@ -93,74 +36,86 @@
     padding: 12px 0;
     gap: 12px;
   }
-
   #listaUsuariosAdmin > div:last-child {
     border-bottom: none;
   }
-
-  #listaUsuariosAdmin > div.banido {
-    background: #ffe6e6;
-  }
-
-  img {
+  img.userFoto {
     width: 48px;
     height: 48px;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
   }
-
   .infoUsuario {
     flex-grow: 1;
     font-weight: 600;
     color: #34495e;
     user-select: text;
   }
-
-  .statusBanido {
-    font-weight: 700;
-    color: #c0392b;
+  input[type="file"].inputFotoUsuario {
+    display: none;
+  }
+  button.btnFotoUsuario {
+    background-color: #3498db;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.3s ease;
+  }
+  button.btnFotoUsuario:hover {
+    background-color: #2980b9;
   }
 
-  .statusAtivo {
-    font-weight: 700;
-    color: #27ae60;
+  /* Grupos */
+  #listaGruposAdmin {
+    margin-top: 40px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #d1d9e6;
+    border-radius: 10px;
+    padding: 12px;
+    background-color: #fafafa;
   }
-
-  input[type="number"] {
-    width: 110px;
-    padding: 6px 10px;
+  #listaGruposAdmin > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e6f2;
+    padding: 10px 0;
+  }
+  #listaGruposAdmin > div:last-child {
+    border-bottom: none;
+  }
+  .nomeGrupo {
+    font-weight: 600;
+    font-size: 16px;
+    color: #2c3e50;
+    flex-grow: 1;
+    user-select: text;
+  }
+  input.editarNomeGrupo {
+    font-size: 16px;
+    padding: 6px 8px;
     border-radius: 6px;
     border: 1px solid #ccc;
-    font-size: 14px;
+    width: 100%;
   }
-
-  button.banirBtn, button.desbanirBtn {
-    padding: 8px 16px;
-    border-radius: 8px;
+  button.btnEditarGrupo, button.btnSalvarGrupo {
+    background-color: #1abc9c;
     border: none;
-    font-weight: 600;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-left: 8px;
     font-size: 14px;
-    user-select: none;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
   }
-
-  button.banirBtn {
-    background-color: #e74c3c;
-    color: white;
-  }
-  button.banirBtn:hover {
-    background-color: #c0392b;
-  }
-
-  button.desbanirBtn {
-    background-color: #2ecc71;
-    color: white;
-  }
-  button.desbanirBtn:hover {
-    background-color: #27ae60;
+  button.btnEditarGrupo:hover, button.btnSalvarGrupo:hover {
+    background-color: #16a085;
   }
 </style>
 
@@ -172,19 +127,17 @@
 <body>
 
 <div id="painelAdmin">
-  <h2>Painel Admin Moderno (Sem Login)</h2>
-
-  <h3>Enviar Foto de Perfil</h3>
-  <input type="file" id="uploadFoto" />
-  <button id="btnUploadFoto">Enviar Foto</button>
-  <p id="msgUpload"></p>
+  <h2>Painel Admin Avançado (Sem Login)</h2>
 
   <h3>Gerenciar Usuários</h3>
   <div id="listaUsuariosAdmin">Carregando usuários...</div>
+
+  <h3>Gerenciar Grupos</h3>
+  <div id="listaGruposAdmin">Carregando grupos...</div>
 </div>
 
 <script>
-  // Seu firebaseConfig
+  // Config do Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
     authDomain: "projeto-deus-yato-928-sk.firebaseapp.com",
@@ -200,10 +153,9 @@
   const storage = firebase.storage();
 
   const listaUsuariosAdmin = document.getElementById("listaUsuariosAdmin");
-  const btnUploadFoto = document.getElementById("btnUploadFoto");
-  const uploadFotoInput = document.getElementById("uploadFoto");
-  const msgUpload = document.getElementById("msgUpload");
+  const listaGruposAdmin = document.getElementById("listaGruposAdmin");
 
+  // Carregar usuários
   async function carregarUsuariosAdmin() {
     listaUsuariosAdmin.innerHTML = "Carregando usuários...";
     const snapshot = await db.ref("usuarios").once("value");
@@ -212,78 +164,112 @@
       listaUsuariosAdmin.innerHTML = "Nenhum usuário cadastrado.";
       return;
     }
+
     listaUsuariosAdmin.innerHTML = "";
 
     for (const uid in usuarios) {
       const userData = usuarios[uid];
-      const banSnap = await db.ref("banidos/" + uid).once("value");
-      const banData = banSnap.val();
-      const agora = Date.now();
-      const banido = banData && banData.banido_ate > agora;
 
-      const div = document.createElement("div");
-      div.className = banido ? "banido" : "";
-      div.innerHTML = `
-        <img src="${userData.fotoPerfil}" alt="${userData.nome}" />
+      const userDiv = document.createElement("div");
+
+      userDiv.innerHTML = `
+        <img class="userFoto" src="${userData.fotoPerfil}" alt="${userData.nome}" />
         <div class="infoUsuario">
           ${userData.nome} <br/>
-          <small>UID: ${uid}</small><br/>
-          Status: <span class="${banido ? "statusBanido" : "statusAtivo"}">${banido ? "Banido até " + new Date(banData.banido_ate).toLocaleString() : "Ativo"}</span>
+          <small>UID: ${uid}</small>
         </div>
-        <input type="number" min="1" placeholder="Minutos ban" id="banTempo_${uid}" />
-        <button class="banirBtn" onclick="banirUsuario('${uid}')">Banir</button>
-        <button class="desbanirBtn" onclick="desbanirUsuario('${uid}')">Desbanir</button>
+        <label>
+          <button class="btnFotoUsuario">Alterar Foto</button>
+          <input type="file" accept="image/*" class="inputFotoUsuario" data-uid="${uid}" />
+        </label>
       `;
-      listaUsuariosAdmin.appendChild(div);
+
+      // Evento para upload da nova foto
+      const inputFile = userDiv.querySelector(".inputFotoUsuario");
+      inputFile.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const uid = e.target.dataset.uid;
+        const ext = file.name.split('.').pop();
+        const nomeArquivo = `usuarios/${uid}/fotoPerfil.${ext}`;
+        const ref = storage.ref(nomeArquivo);
+
+        try {
+          const uploadTask = await ref.put(file);
+          const url = await uploadTask.ref.getDownloadURL();
+          await db.ref(`usuarios/${uid}/fotoPerfil`).set(url);
+          alert("Foto do usuário atualizada!");
+          carregarUsuariosAdmin(); // Recarrega para atualizar imagem
+        } catch (err) {
+          alert("Erro ao enviar foto: " + err.message);
+        }
+      });
+
+      listaUsuariosAdmin.appendChild(userDiv);
     }
   }
 
-  window.banirUsuario = async (uid) => {
-    const input = document.getElementById("banTempo_" + uid);
-    const minutos = parseInt(input.value);
-    if (!minutos || minutos <= 0) {
-      alert("Digite um tempo válido em minutos.");
+  // Carregar grupos
+  async function carregarGruposAdmin() {
+    listaGruposAdmin.innerHTML = "Carregando grupos...";
+    const snapshot = await db.ref("grupos").once("value");
+    const grupos = snapshot.val();
+    if (!grupos) {
+      listaGruposAdmin.innerHTML = "Nenhum grupo cadastrado.";
       return;
     }
-    const banido_ate = Date.now() + minutos * 60000;
-    await db.ref("banidos/" + uid).set({ banido_ate });
-    alert("Usuário banido por " + minutos + " minutos.");
-    carregarUsuariosAdmin();
-  };
 
-  window.desbanirUsuario = async (uid) => {
-    await db.ref("banidos/" + uid).remove();
-    alert("Usuário desbanido.");
-    carregarUsuariosAdmin();
-  };
+    listaGruposAdmin.innerHTML = "";
 
-  btnUploadFoto.onclick = () => {
-    const file = uploadFotoInput.files[0];
-    if (!file) {
-      alert("Selecione um arquivo para enviar!");
-      return;
+    for (const grupoId in grupos) {
+      const grupo = grupos[grupoId];
+
+      const grupoDiv = document.createElement("div");
+
+      grupoDiv.innerHTML = `
+        <span class="nomeGrupo" id="nomeGrupo_${grupoId}">${grupo.nome}</span>
+        <input type="text" class="editarNomeGrupo" id="inputNome_${grupoId}" value="${grupo.nome}" style="display:none" />
+        <button class="btnEditarGrupo" id="btnEditar_${grupoId}">Editar</button>
+        <button class="btnSalvarGrupo" id="btnSalvar_${grupoId}" style="display:none">Salvar</button>
+      `;
+
+      listaGruposAdmin.appendChild(grupoDiv);
+
+      // Botões editar e salvar
+      const btnEditar = grupoDiv.querySelector(`#btnEditar_${grupoId}`);
+      const btnSalvar = grupoDiv.querySelector(`#btnSalvar_${grupoId}`);
+      const spanNome = grupoDiv.querySelector(`#nomeGrupo_${grupoId}`);
+      const inputNome = grupoDiv.querySelector(`#inputNome_${grupoId}`);
+
+      btnEditar.onclick = () => {
+        spanNome.style.display = 'none';
+        inputNome.style.display = 'inline-block';
+        btnEditar.style.display = 'none';
+        btnSalvar.style.display = 'inline-block';
+        inputNome.focus();
+      };
+
+      btnSalvar.onclick = async () => {
+        const novoNome = inputNome.value.trim();
+        if (!novoNome) {
+          alert("Digite um nome válido para o grupo.");
+          inputNome.focus();
+          return;
+        }
+        await db.ref(`grupos/${grupoId}/nome`).set(novoNome);
+        spanNome.textContent = novoNome;
+        spanNome.style.display = 'inline-block';
+        inputNome.style.display = 'none';
+        btnEditar.style.display = 'inline-block';
+        btnSalvar.style.display = 'none';
+        alert("Nome do grupo atualizado!");
+      };
     }
-    const ref = storage.ref("fotosPerfil/" + file.name);
-    const uploadTask = ref.put(file);
-
-    uploadTask.on("state_changed",
-      null,
-      error => {
-        msgUpload.style.color = "red";
-        msgUpload.textContent = "Erro no upload: " + error.message;
-      },
-      () => {
-        uploadTask.snapshot.ref.getDownloadURL().then(url => {
-          db.ref("fotosPerfil").push(url);
-          msgUpload.style.color = "green";
-          msgUpload.textContent = "Foto enviada com sucesso!";
-          uploadFotoInput.value = "";
-          carregarUsuariosAdmin();
-        });
-      });
-  };
+  }
 
   carregarUsuariosAdmin();
+  carregarGruposAdmin();
 </script>
 
 </body>
