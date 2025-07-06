@@ -1,169 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>🔥 Mini Instagram</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrangeFlix</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script defer src="firebase.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
+  <header>
+    <h1 class="logo">🍊 OrangeFlix</h1>
+    <nav>
+      <ul>
+        <li onclick="scrollToSection('lancamentos')">Lançamentos</li>
+        <li onclick="scrollToSection('destaques')">Destaques</li>
+        <li onclick="scrollToSection('series')">Séries</li>
+        <li onclick="scrollToSection('filmes')">Filmes</li>
+        <li><button onclick="loginGoogle()">Entrar com Google</button></li>
+      </ul>
+    </nav>
+  </header>
 
-  <h1>🔥 Mini Instagram Firebase</h1>
+  <section class="categoria">
+    <h2>🔥 Lançamentos</h2>
+    <div class="slide" id="lancamentos"></div>
+  </section>
 
-  <div id="user-info"></div>
+  <section class="categoria">
+    <h2>⭐ Destaques</h2>
+    <div class="slide" id="destaques"></div>
+  </section>
 
-  <div id="auth">
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Senha" />
-    <button id="btn-login">Entrar</button>
-    <button id="btn-signup">Cadastrar</button>
-    <button id="btn-logout" style="display:none;">Sair</button>
-  </div>
-
-  <div id="upload-section" style="display:none;">
-    <input type="file" id="file" accept="image/*" />
-    <button id="btn-upload">📤 Postar Foto</button>
-  </div>
-
-  <h2>🖼️ Feed</h2>
-  <div id="posts"></div>
-
-  <script>
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const btnLogin = document.getElementById('btn-login');
-    const btnSignup = document.getElementById('btn-signup');
-    const btnLogout = document.getElementById('btn-logout');
-    const userInfo = document.getElementById('user-info');
-    const uploadSection = document.getElementById('upload-section');
-    const fileInput = document.getElementById('file');
-    const btnUpload = document.getElementById('btn-upload');
-    const postsDiv = document.getElementById('posts');
-
-    btnLogin.onclick = () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
-    };
-
-    btnSignup.onclick = () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.createUserWithEmailAndPassword(email, password).catch(err => alert(err.message));
-    };
-
-    btnLogout.onclick = () => auth.signOut();
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userInfo.innerHTML = `Logado como: <a href="perfil.html?uid=${user.uid}">${user.email}</a>`;
-        btnLogout.style.display = 'inline';
-        btnLogin.style.display = 'none';
-        btnSignup.style.display = 'none';
-        emailInput.style.display = 'none';
-        passwordInput.style.display = 'none';
-        uploadSection.style.display = 'block';
-        loadPosts();
-      } else {
-        userInfo.textContent = 'Não logado';
-        btnLogout.style.display = 'none';
-        btnLogin.style.display = 'inline';
-        btnSignup.style.display = 'inline';
-        emailInput.style.display = 'inline';
-        passwordInput.style.display = 'inline';
-        uploadSection.style.display = 'none';
-        postsDiv.innerHTML = '';
-      }
-    });
-
-    btnUpload.onclick = async () => {
-      const file = fileInput.files[0];
-      if (!file) return alert('Selecione uma imagem!');
-      const user = auth.currentUser;
-      const ref = storage.ref(`posts/${user.uid}/${Date.now()}_${file.name}`);
-      await ref.put(file);
-      const photoURL = await ref.getDownloadURL();
-
-      await db.collection('posts').add({
-        userId: user.uid,
-        email: user.email,
-        photoURL,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      fileInput.value = '';
-      loadPosts();
-    };
-
-    async function loadPosts() {
-      const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').get();
-      postsDiv.innerHTML = '';
-      snapshot.forEach(doc => {
-        const post = doc.data();
-        const postId = doc.id;
-        const postEl = document.createElement('div');
-        postEl.className = 'post';
-        postEl.innerHTML = `
-          <b><a href="perfil.html?uid=${post.userId}">${post.email}</a></b><br>
-          <img src="${post.photoURL}" alt="Post" /><br>
-          <button onclick="likePost('${postId}')">❤️ Curtir</button>
-          <span id="like-count-${postId}">0</span> curtidas
-          <div class="comment-box">
-            <input type="text" placeholder="Comentário..." id="comment-${postId}" />
-            <button onclick="commentPost('${postId}')">Comentar</button>
-            <div id="comments-${postId}"></div>
-          </div>
-        `;
-        postsDiv.appendChild(postEl);
-        loadComments(postId);
-        loadLikes(postId);
-      });
-    }
-
-    async function commentPost(postId) {
-      const input = document.getElementById(`comment-${postId}`);
-      const text = input.value.trim();
-      if (!text) return;
-      const user = auth.currentUser;
-      await db.collection('posts').doc(postId).collection('comments').add({
-        text,
-        user: user.email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      input.value = '';
-      loadComments(postId);
-    }
-
-    async function loadComments(postId) {
-      const container = document.getElementById(`comments-${postId}`);
-      const snapshot = await db.collection('posts').doc(postId).collection('comments').orderBy('createdAt').get();
-      container.innerHTML = '';
-      snapshot.forEach(doc => {
-        const c = doc.data();
-        container.innerHTML += `<p><b>${c.user}:</b> ${c.text}</p>`;
-      });
-    }
-
-    async function likePost(postId) {
-      const user = auth.currentUser;
-      const likeRef = db.collection('posts').doc(postId).collection('likes').doc(user.uid);
-      const docSnap = await likeRef.get();
-      if (docSnap.exists) {
-        await likeRef.delete(); // descurtir
-      } else {
-        await likeRef.set({ likedAt: firebase.firestore.FieldValue.serverTimestamp() });
-      }
-      loadLikes(postId);
-    }
-
-    async function loadLikes(postId) {
-      const snap = await db.collection('posts').doc(postId).collection('likes').get();
-      document.getElementById(`like-count-${postId}`).textContent = snap.size;
-    }
-  </script>
+  <form id="formFilme">
+    <h3>Adicionar Filme (Admin)</h3>
+    <input type="text" id="titulo" placeholder="Título" required>
+    <input type="number" id="ano" placeholder="Ano" required>
+    <input type="text" id="categoria" placeholder="lancamento ou destaque" required>
+    <input type="file" id="capa" required>
+    <button type="submit">Salvar Filme</button>
+  </form>
 </body>
 </html>
